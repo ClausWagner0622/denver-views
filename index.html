@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Denver Views — Daily Property Briefing</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #fafaf8; --surface: #ffffff; --surface2: #f4f3ef;
+    --border: rgba(0,0,0,0.09); --border2: rgba(0,0,0,0.16);
+    --text: #1a1a18; --muted: #6b6b67; --hint: #9b9b97;
+    --accent: #2a6496; --accent-bg: #eaf1f8;
+    --green: #1a7a4a; --green-bg: #e8f5ee;
+    --amber: #8a5a00; --amber-bg: #fdf3dc;
+    --red: #a83232; --red-bg: #fceaea;
+    --teal: #0f6e56; --teal-bg: #e1f5ee;
+    --purple: #533cb7; --purple-bg: #eeedfe;
+    --radius: 10px; --radius-lg: 14px;
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; min-height: 100vh; }
+  .shell { display: grid; grid-template-columns: 310px 1fr; min-height: 100vh; }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 1.5rem 1.25rem; position: sticky; top: 0; height: 100vh; overflow-y: auto; }
+  .main { padding: 1.75rem 2rem; overflow-y: auto; height: 100vh; }
+  .logo { font-size: 17px; font-weight: 600; color: var(--text); margin-bottom: 0.25rem; letter-spacing: -0.3px; }
+  .logo-sub { font-size: 12px; color: var(--muted); margin-bottom: 1.75rem; }
+  .sidebar-section { margin-bottom: 1.5rem; }
+  .sidebar-label { font-size: 10px; font-weight: 600; color: var(--hint); letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 0.6rem; }
+  .zone-btn { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px; border-radius: 8px; border: none; background: transparent; cursor: pointer; text-align: left; font-size: 13px; color: var(--muted); transition: all 0.15s; }
+  .zone-btn:hover { background: var(--surface2); color: var(--text); }
+  .zone-btn.active { background: var(--accent-bg); color: var(--accent); font-weight: 500; }
+  .zone-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .zone-score { font-size: 11px; font-weight: 600; padding: 2px 7px; border-radius: 99px; margin-left: auto; }
+  .score-a { background: var(--green-bg); color: var(--green); }
+  .score-b { background: var(--amber-bg); color: var(--amber); }
+  .filter-row { display: flex; flex-direction: column; gap: 9px; }
+  .filter-item { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; }
+  .filter-item label { color: var(--muted); }
+  .mini-select { font-size: 12px; border: 1px solid var(--border2); border-radius: 6px; padding: 3px 6px; background: var(--bg); color: var(--text); }
+  .range-wrap { display: flex; align-items: center; gap: 8px; }
+  .range-wrap input[type=range] { flex: 1; accent-color: var(--accent); }
+  .range-val { font-size: 12px; font-weight: 600; min-width: 42px; color: var(--accent); text-align: right; }
+  .urban-grid { display: flex; flex-direction: column; gap: 7px; }
+  .urban-row { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+  .urban-icon { width: 18px; text-align: center; font-size: 13px; flex-shrink: 0; }
+  .urban-label { color: var(--muted); width: 88px; flex-shrink: 0; font-size: 11.5px; }
+  .urban-row input[type=range] { flex: 1; accent-color: var(--teal); }
+  .urban-val { font-size: 11px; font-weight: 600; color: var(--teal); min-width: 22px; text-align: right; }
+  .run-btn { width: 100%; padding: 10px; background: var(--accent); color: #fff; border: none; border-radius: var(--radius); font-size: 14px; font-weight: 500; cursor: pointer; margin-top: 0.5rem; transition: opacity 0.15s; }
+  .run-btn:hover { opacity: 0.88; }
+  .run-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .last-run { font-size: 11px; color: var(--hint); margin-top: 0.6rem; text-align: center; }
+  .page-title { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; }
+  .page-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; margin-bottom: 1.5rem; }
+  .badge { font-size: 11px; font-weight: 500; padding: 3px 9px; border-radius: 99px; }
+  .badge-blue { background: var(--accent-bg); color: var(--accent); }
+  .badge-green { background: var(--green-bg); color: var(--green); }
+  .badge-amber { background: var(--amber-bg); color: var(--amber); }
+  .badge-teal { background: var(--teal-bg); color: var(--teal); }
+  .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem; }
+  .section-title { font-size: 17px; font-weight: 600; }
+  .count-badge { background: var(--surface2); color: var(--muted); font-size: 12px; font-weight: 500; padding: 3px 10px; border-radius: 99px; }
+  .zone-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); gap: 14px; margin-bottom: 2rem; }
+  .zone-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1rem 1.1rem; cursor: pointer; transition: box-shadow 0.15s, border-color 0.15s; }
+  .zone-card:hover { border-color: var(--accent); box-shadow: 0 2px 12px rgba(42,100,150,0.1); }
+  .zone-card.selected { border-color: var(--accent); border-width: 1.5px; }
+  .zc-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 6px; gap: 8px; }
+  .zc-name { font-size: 14px; font-weight: 600; }
+  .zc-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 10px; }
+  .dim-bars { display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px; }
+  .dim-row { display: flex; align-items: center; gap: 6px; }
+  .dim-icon { font-size: 11px; width: 16px; text-align: center; flex-shrink: 0; }
+  .dim-label { font-size: 10.5px; color: var(--hint); width: 72px; flex-shrink: 0; }
+  .dim-bar-bg { flex: 1; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+  .dim-bar-fill { height: 100%; border-radius: 3px; }
+  .dim-score-num { font-size: 10.5px; font-weight: 600; width: 22px; text-align: right; }
+  .zc-bottom { display: flex; justify-content: space-between; align-items: flex-end; border-top: 1px solid var(--border); padding-top: 8px; margin-top: 4px; }
+  .listing-list { display: flex; flex-direction: column; gap: 14px; margin-bottom: 2rem; }
+  .listing-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 1.1rem 1.25rem; }
+  .listing-card.new-listing { border-left: 3px solid var(--accent); }
+  .listing-card.price-drop { border-left: 3px solid var(--green); }
+  .listing-card.pocket { border-left: 3px solid var(--purple); }
+  .lc-top { display: grid; grid-template-columns: 1fr auto; gap: 12px; margin-bottom: 10px; }
+  .lc-addr { font-size: 14.5px; font-weight: 600; margin-bottom: 2px; }
+  .lc-zone { font-size: 12px; color: var(--muted); margin-bottom: 7px; }
+  .lc-tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 7px; }
+  .lc-tag { font-size: 10.5px; font-weight: 500; padding: 2px 7px; border-radius: 99px; }
+  .tag-view { background: #e8f0fa; color: #1d4e8a; }
+  .tag-lake { background: #e0f4ff; color: #0a5a7a; }
+  .tag-new { background: var(--accent-bg); color: var(--accent); }
+  .tag-drop { background: var(--green-bg); color: var(--green); }
+  .tag-pocket { background: var(--purple-bg); color: var(--purple); }
+  .tag-hillside { background: var(--red-bg); color: var(--red); }
+  .tag-urban { background: var(--teal-bg); color: var(--teal); }
+  .lc-specs { font-size: 12.5px; color: var(--muted); display: flex; gap: 10px; flex-wrap: wrap; }
+  .lc-right { text-align: right; flex-shrink: 0; }
+  .lc-price { font-size: 17px; font-weight: 700; }
+  .lc-ppsf { font-size: 11.5px; color: var(--muted); }
+  .lc-urban-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 4px; background: var(--surface2); border-radius: 8px; padding: 10px 12px; margin: 10px 0; }
+  .lc-urban-cell { text-align: center; }
+  .lc-urban-icon { font-size: 14px; margin-bottom: 1px; }
+  .lc-urban-val { font-size: 12px; font-weight: 600; }
+  .lc-urban-label { font-size: 9px; color: var(--hint); line-height: 1.2; }
+  .lc-urban-divider { width: 1px; background: var(--border); margin: 4px 0; align-self: stretch; }
+  .score-excellent { color: var(--green); }
+  .score-good { color: var(--accent); }
+  .score-fair { color: var(--amber); }
+  .score-poor { color: var(--red); }
+  .composite-pill { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; width: 50px; height: 50px; border-radius: 50%; }
+  .lc-analysis { font-size: 12.5px; color: var(--muted); padding-top: 8px; border-top: 1px solid var(--border); line-height: 1.55; }
+  .chat-wrap { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .chat-header { padding: 0.9rem 1.25rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 10px; }
+  .chat-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--accent-bg); color: var(--accent); font-size: 13px; font-weight: 600; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .chat-name { font-size: 14px; font-weight: 600; }
+  .chat-status { font-size: 11px; color: var(--green); }
+  .chat-messages { height: 300px; overflow-y: auto; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 10px; }
+  .msg { max-width: 85%; }
+  .msg.agent { align-self: flex-start; }
+  .msg.user { align-self: flex-end; }
+  .msg-bubble { padding: 10px 14px; border-radius: 14px; font-size: 13.5px; line-height: 1.55; }
+  .agent .msg-bubble { background: var(--surface2); color: var(--text); border-bottom-left-radius: 4px; }
+  .user .msg-bubble { background: var(--accent); color: #fff; border-bottom-right-radius: 4px; }
+  .msg-time { font-size: 10px; color: var(--hint); margin-top: 3px; padding: 0 4px; }
+  .user .msg-time { text-align: right; }
+  .chat-input-row { padding: 0.75rem 1rem; border-top: 1px solid var(--border); display: flex; gap: 8px; }
+  .chat-input-row input { flex: 1; padding: 9px 12px; border: 1px solid var(--border2); border-radius: 8px; font-size: 13.5px; background: var(--bg); color: var(--text); outline: none; }
+  .chat-input-row input:focus { border-color: var(--accent); }
+  .chat-send { padding: 9px 18px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13.5px; font-weight: 500; cursor: pointer; transition: opacity 0.15s; }
+  .chat-send:hover { opacity: 0.88; }
+  .chat-send:disabled { opacity: 0.5; cursor: not-allowed; }
+  .typing { display: flex; gap: 4px; padding: 10px 14px; align-items: center; }
+  .typing span { width: 7px; height: 7px; border-radius: 50%; background: var(--hint); animation: bounce 1.2s infinite; }
+  .typing span:nth-child(2) { animation-delay: 0.2s; }
+  .typing span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes bounce { 0%,80%,100%{transform:translateY(0)} 40%{transform:translateY(-6px)} }
+  .loading-overlay { display: none; align-items: center; justify-content: center; padding: 2rem; flex-direction: column; gap: 12px; }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 28px; height: 28px; border: 2.5px solid var(--border2); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 13px; color: var(--muted); }
+  .disclaimer { font-size: 11px; color: var(--hint); padding: 1rem 0; border-top: 1px solid var(--border); margin-top: 2rem; line-height: 1.5; }
+  /* ── Map view ── */
+  .view-tabs { display: flex; gap: 4px; margin-bottom: 1.25rem; border-bottom: 1px solid var(--border); padding-bottom: 0; }
+  .vtab { padding: 8px 16px; font-size: 13px; font-weight: 500; border: none; background: transparent; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+  .vtab:hover { color: var(--text); }
+  .vtab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .view-panel { display: none; }
+  .view-panel.active { display: block; }
+  #map-container { width: 100%; height: 540px; border-radius: var(--radius-lg); overflow: hidden; border: 1px solid var(--border); position: relative; margin-bottom: 1.25rem; }
+  .map-controls { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
+  .map-search-wrap { display: flex; gap: 6px; flex: 1; min-width: 200px; }
+  .map-search-input { flex: 1; padding: 8px 12px; border: 1px solid var(--border2); border-radius: 8px; font-size: 13px; background: var(--bg); color: var(--text); outline: none; }
+  .map-search-input:focus { border-color: var(--accent); }
+  .map-btn { padding: 8px 14px; background: var(--accent); color: #fff; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; }
+  .map-btn:hover { opacity: 0.88; }
+  .map-btn.secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border2); }
+  .map-legend { display: flex; gap: 14px; font-size: 11.5px; color: var(--muted); flex-wrap: wrap; margin-bottom: 8px; }
+  .map-legend span { display: flex; align-items: center; gap: 5px; }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .zone-overlay-info { font-size: 12px; color: var(--muted); padding: 8px 12px; background: var(--surface2); border-radius: 8px; margin-bottom: 10px; }
+  .location-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+  .preset-btn { padding: 4px 10px; font-size: 11.5px; border: 1px solid var(--border2); border-radius: 99px; background: transparent; cursor: pointer; color: var(--muted); transition: all 0.15s; }
+  .preset-btn:hover { background: var(--accent-bg); color: var(--accent); border-color: var(--accent); }
+
+  /* ── Future Layer ── */
+  .future-panel { background: linear-gradient(135deg, #0d1b2a 0%, #1a2d44 100%); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; color: #e8edf2; }
+  .future-header { display: flex; align-items: center; gap: 12px; margin-bottom: 1.25rem; }
+  .future-icon { font-size: 24px; }
+  .future-title { font-size: 18px; font-weight: 600; color: #e8edf2; }
+  .future-sub { font-size: 12px; color: #7a9ab8; margin-top: 1px; }
+  .future-tabs { display: flex; gap: 6px; margin-bottom: 1.25rem; flex-wrap: wrap; }
+  .ftab { padding: 6px 13px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.15); font-size: 12px; cursor: pointer; background: transparent; color: #7a9ab8; transition: all 0.15s; }
+  .ftab:hover { background: rgba(255,255,255,0.08); color: #e8edf2; }
+  .ftab.active { background: rgba(99,180,255,0.2); color: #63b4ff; border-color: rgba(99,180,255,0.4); font-weight: 500; }
+  .future-content { display: none; }
+  .future-content.active { display: block; }
+  .horizon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.25rem; }
+  .horizon-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 14px; }
+  .horizon-year { font-size: 10px; font-weight: 600; color: #63b4ff; letter-spacing: 0.06em; margin-bottom: 4px; }
+  .horizon-title { font-size: 13px; font-weight: 600; color: #e8edf2; margin-bottom: 4px; }
+  .horizon-desc { font-size: 11.5px; color: #7a9ab8; line-height: 1.5; }
+  .zone-future-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .zf-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; padding: 12px 14px; }
+  .zf-name { font-size: 12.5px; font-weight: 600; color: #e8edf2; margin-bottom: 8px; }
+  .zf-bars { display: flex; flex-direction: column; gap: 5px; }
+  .zf-row { display: flex; align-items: center; gap: 6px; }
+  .zf-label { font-size: 10.5px; color: #7a9ab8; width: 88px; flex-shrink: 0; }
+  .zf-bar-bg { flex: 1; height: 4px; background: rgba(255,255,255,0.1); border-radius: 2px; overflow: hidden; }
+  .zf-bar-fill { height: 100%; border-radius: 2px; }
+  .zf-num { font-size: 10.5px; font-weight: 600; width: 24px; text-align: right; }
+  .zf-verdict { margin-top: 10px; font-size: 11px; padding: 6px 10px; border-radius: 6px; line-height: 1.4; }
+  .verdict-win { background: rgba(26,122,74,0.25); color: #5dca90; border: 1px solid rgba(26,122,74,0.3); }
+  .verdict-neutral { background: rgba(138,90,0,0.25); color: #f0b34a; border: 1px solid rgba(138,90,0,0.3); }
+  .verdict-risk { background: rgba(168,50,50,0.25); color: #e07070; border: 1px solid rgba(168,50,50,0.3); }
+  .hidden-gem-grid { display: flex; flex-direction: column; gap: 10px; }
+  .gem-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(99,180,255,0.25); border-radius: 10px; padding: 14px 16px; display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .gem-tag { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 99px; background: rgba(99,180,255,0.15); color: #63b4ff; display: inline-block; margin-bottom: 5px; }
+  .gem-name { font-size: 14px; font-weight: 600; color: #e8edf2; margin-bottom: 3px; }
+  .gem-zone { font-size: 11.5px; color: #7a9ab8; margin-bottom: 8px; }
+  .gem-why { font-size: 12px; color: #a8c0d8; line-height: 1.55; }
+  .gem-uplift { text-align: right; }
+  .gem-uplift-val { font-size: 20px; font-weight: 700; color: #5dca90; }
+  .gem-uplift-label { font-size: 10px; color: #7a9ab8; }
+  .scenario-toggle { display: flex; gap: 8px; margin-bottom: 1rem; }
+  .scen-btn { padding: 6px 12px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); font-size: 12px; cursor: pointer; background: transparent; color: #7a9ab8; transition: all 0.15s; }
+  .scen-btn:hover { background: rgba(255,255,255,0.06); color: #e8edf2; }
+  .scen-btn.active { background: rgba(99,180,255,0.18); color: #63b4ff; border-color: rgba(99,180,255,0.35); font-weight: 500; }
+  .scen-content { display: none; }
+  .scen-content.show { display: block; }
+  .impact-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .impact-table th { text-align: left; color: #63b4ff; font-weight: 600; padding: 6px 8px; border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 10.5px; letter-spacing: 0.04em; }
+  .impact-table td { padding: 8px 8px; border-bottom: 1px solid rgba(255,255,255,0.06); color: #a8c0d8; vertical-align: top; }
+  .impact-table tr:last-child td { border-bottom: none; }
+  .impact-table .zone-col { color: #e8edf2; font-weight: 500; }
+  .delta-pos { color: #5dca90; font-weight: 600; }
+  .delta-neg { color: #e07070; font-weight: 600; }
+  .delta-neu { color: #f0b34a; font-weight: 600; }
+  .future-note { font-size: 11px; color: #5a7a9a; margin-top: 1rem; line-height: 1.6; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem; }
+  @media (max-width: 800px) {
+    .shell { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .main { padding: 1.25rem; }
+    .lc-urban-grid { grid-template-columns: repeat(5, 1fr); }
+    #map-container { height: 380px; }
+  }
+</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+</head>
+<body>
+<div class="shell">
+
+<aside class="sidebar">
+  <div class="logo">🏔 <span id="app-city-name">Denver</span> Views</div>
+  <div class="logo-sub">Daily Property Briefing</div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Search location</div>
+    <div style="display:flex;gap:5px;margin-bottom:6px;">
+      <input type="text" id="city-search-input" placeholder="City, neighborhood or zip…" style="flex:1;padding:7px 10px;border:1px solid var(--border2);border-radius:7px;font-size:12.5px;background:var(--bg);color:var(--text);outline:none;" onkeydown="if(event.key==='Enter')searchCity()">
+      <button onclick="searchCity()" style="padding:7px 11px;background:var(--accent);color:#fff;border:none;border-radius:7px;font-size:12.5px;cursor:pointer;">Go</button>
+    </div>
+    <div style="display:flex;gap:4px;flex-wrap:wrap;">
+      <button class="preset-btn" onclick="loadPreset('denver')">Denver</button>
+      <button class="preset-btn" onclick="loadPreset('boulder')">Boulder</button>
+      <button class="preset-btn" onclick="loadPreset('colorado_springs')">Colo. Springs</button>
+      <button class="preset-btn" onclick="loadPreset('custom')">+ Custom</button>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">View Zones</div>
+    <button class="zone-btn active" onclick="selectZone('all')" id="btn-all"><span class="zone-dot" style="background:#888"></span> All Zones</button>
+    <button class="zone-btn" onclick="selectZone('foothills')" id="btn-foothills"><span class="zone-dot" style="background:#2a6496"></span> Foothills Corridor <span class="zone-score score-a">A+</span></button>
+    <button class="zone-btn" onclick="selectZone('hilltop')" id="btn-hilltop"><span class="zone-dot" style="background:#5a8e3a"></span> Hilltop / Crestmoor <span class="zone-score score-a">A</span></button>
+    <button class="zone-btn" onclick="selectZone('cherryhills')" id="btn-cherryhills"><span class="zone-dot" style="background:#8a4a1a"></span> Cherry Hills / GV <span class="zone-score score-a">A</span></button>
+    <button class="zone-btn" onclick="selectZone('highlands')" id="btn-highlands"><span class="zone-dot" style="background:#6a3a8a"></span> Highlands / Sloan's <span class="zone-score score-b">B+</span></button>
+    <button class="zone-btn" onclick="selectZone('lookout')" id="btn-lookout"><span class="zone-dot" style="background:#c04a20"></span> Lookout Mtn / Golden <span class="zone-score score-a">A+</span></button>
+    <button class="zone-btn" onclick="selectZone('castlepines')" id="btn-castlepines"><span class="zone-dot" style="background:#1a6a5a"></span> Castle Pines South <span class="zone-score score-b">B+</span></button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Urban Necessity Priorities</div>
+    <div style="font-size:11px;color:var(--hint);margin-bottom:8px;">Drag to set importance (0 = don't care → 10 = must-have). Zone scores update live.</div>
+    <div class="urban-grid">
+      <div class="urban-row"><span class="urban-icon">🍽️</span><span class="urban-label">Restaurants</span><input type="range" min="0" max="10" value="8" id="w-dining" oninput="updateWeights()"><span class="urban-val" id="wv-dining">8</span></div>
+      <div class="urban-row"><span class="urban-icon">🛒</span><span class="urban-label">Grocery/shops</span><input type="range" min="0" max="10" value="9" id="w-grocery" oninput="updateWeights()"><span class="urban-val" id="wv-grocery">9</span></div>
+      <div class="urban-row"><span class="urban-icon">🏥</span><span class="urban-label">Hospital/medical</span><input type="range" min="0" max="10" value="7" id="w-medical" oninput="updateWeights()"><span class="urban-val" id="wv-medical">7</span></div>
+      <div class="urban-row"><span class="urban-icon">🎭</span><span class="urban-label">Arts/culture</span><input type="range" min="0" max="10" value="5" id="w-culture" oninput="updateWeights()"><span class="urban-val" id="wv-culture">5</span></div>
+      <div class="urban-row"><span class="urban-icon">🏋️</span><span class="urban-label">Fitness/wellness</span><input type="range" min="0" max="10" value="7" id="w-fitness" oninput="updateWeights()"><span class="urban-val" id="wv-fitness">7</span></div>
+      <div class="urban-row"><span class="urban-icon">🏫</span><span class="urban-label">Schools</span><input type="range" min="0" max="10" value="5" id="w-schools" oninput="updateWeights()"><span class="urban-val" id="wv-schools">5</span></div>
+      <div class="urban-row"><span class="urban-icon">☕</span><span class="urban-label">Walkability</span><input type="range" min="0" max="10" value="6" id="w-walk" oninput="updateWeights()"><span class="urban-val" id="wv-walk">6</span></div>
+    </div>
+    <div style="font-size:11px;color:var(--hint);margin-top:6px;font-style:italic;">Composite scores recalculate instantly.</div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Property Filters</div>
+    <div class="filter-row">
+      <div class="filter-item"><label>View type</label>
+        <select class="mini-select" id="f-viewtype"><option value="any">Any</option><option>Mountain</option><option>Lake / Water</option><option>Mountain + Lake</option><option>City + Mountain</option></select>
+      </div>
+      <div class="filter-item"><label>Max commute</label></div>
+      <div class="range-wrap"><input type="range" id="f-commute" min="10" max="60" value="40" step="5" oninput="document.getElementById('commute-val').textContent=this.value+'m'"><span class="range-val" id="commute-val">40m</span></div>
+      <div class="filter-item"><label>Max budget</label></div>
+      <div class="range-wrap"><input type="range" id="f-budget" min="1" max="15" value="7" step="0.5" oninput="document.getElementById('budget-val').textContent='$'+this.value+'M'"><span class="range-val" id="budget-val">$7M</span></div>
+      <div class="filter-item"><label>Min urban score</label>
+        <select class="mini-select" id="f-urban"><option value="0">Any</option><option value="50">50+ Fair</option><option value="65">65+ Good</option><option value="78">78+ Excellent</option></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Search Focus</div>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)"><input type="checkbox" checked id="opt-future"> Weight future-proof score</label>
+      <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)"><input type="checkbox" checked id="opt-view"> Prioritise mountain views</label>
+      <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)"><input type="checkbox" id="opt-new-only"> New listings only (&lt;7 days)</label>
+      <label style="font-size:12.5px;display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--muted)"><input type="checkbox" checked id="opt-sfonly"> Single family only</label>
+    </div>
+  </div>
+
+  <button class="run-btn" onclick="generateRecommendations()" id="run-btn">🔍 Generate My Searches</button>
+  <div class="last-run" id="last-run-text"></div>
+  <div style="font-size:11px;margin-top:8px;text-align:center;padding:6px;border-radius:6px;background:var(--green-bg);color:var(--green);">✓ Instant · No API key needed</div>
+</aside>
+
+<!-- key modal stub (unused but keeps JS references happy) -->
+<div id="key-modal" style="display:none;">
+  <div><input id="key-input" type="text"></div>
+</div>
+
+<main class="main">
+  <div style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:0.5rem;">
+    <div>
+      <div class="page-title" id="main-page-title">Denver View Properties</div>
+      <div class="page-sub" id="date-line"></div>
+    </div>
+  </div>
+  <div class="badge-row">
+    <span class="badge badge-blue">Mountain views</span>
+    <span class="badge badge-blue">Lake views</span>
+    <span class="badge badge-green">South-facing</span>
+    <span class="badge badge-teal">Urban access scored</span>
+    <span class="badge badge-amber">Composite ranking</span>
+    <span class="badge" style="background:#1a2d44;color:#63b4ff;">🚀 Future layer</span>
+  </div>
+
+  <!-- ── View tabs ── -->
+  <div class="view-tabs">
+    <button class="vtab active" onclick="switchView('zones')" id="vtab-zones">📊 Zone Analysis</button>
+    <button class="vtab" onclick="switchView('list')" id="vtab-list">🔍 Search Recommendations</button>
+    <button class="vtab" onclick="switchView('map')" id="vtab-map">🗺 Map</button>
+    <button class="vtab" onclick="switchView('future')" id="vtab-future">🚀 Future Layer</button>
+    <button class="vtab" onclick="switchView('chat')" id="vtab-chat">💬 Ask Vista</button>
+  </div>
+
+  <!-- ── ZONES PANEL ── -->
+  <div class="view-panel active" id="vpanel-zones">
+    <div class="section-header" style="margin-bottom:1rem;">
+      <div class="section-title">Zone Comparison</div>
+      <button onclick="generateRecommendations()" style="padding:7px 16px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;">🔍 Generate My Searches →</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:1rem;">Drag the sliders on the left to set your priorities — scores update live. Then click <strong>Generate My Searches</strong> to get ranked Redfin links.</div>
+    <div class="zone-grid" id="zone-cards"></div>
+  </div>
+
+  <!-- ── RECOMMENDATIONS PANEL ── -->
+  <div class="view-panel" id="vpanel-list">
+    <div class="section-header">
+      <div class="section-title">Your Personalised Redfin Searches</div>
+      <span class="count-badge" id="listings-count" style="display:none"></span>
+    </div>
+    <div id="rec-empty" style="padding:2.5rem 1rem;text-align:center;color:var(--muted);">
+      <div style="font-size:32px;margin-bottom:12px;">🔍</div>
+      <div style="font-size:15px;font-weight:600;color:var(--text);margin-bottom:6px;">Set your priorities, then generate</div>
+      <div style="font-size:13px;line-height:1.7;">Adjust the Urban Necessity sliders and filters on the left,<br>then click <strong>Generate My Searches</strong> to get tailored Redfin search links<br>ranked by your composite score.</div>
+    </div>
+    <div id="rec-results" style="display:none;"></div>
+  </div>
+
+  <!-- ── MAP PANEL ── -->
+  <div class="view-panel" id="vpanel-map">
+    <div class="map-controls">
+      <div class="map-search-wrap">
+        <input type="text" id="map-search-input" class="map-search-input" placeholder="Search any city, neighborhood, or region…" onkeydown="if(event.key==='Enter')geocodeAndFly()">
+        <button class="map-btn" onclick="geocodeAndFly()">Search map</button>
+        <button class="map-btn secondary" onclick="flyToCurrentZones()">Reset to zones</button>
+      </div>
+    </div>
+    <div class="location-presets">
+      <span style="font-size:11px;color:var(--hint);align-self:center;">Quick:</span>
+      <button class="preset-btn" onclick="flyTo(39.7392,-104.9903,10,'Denver metro')">Denver</button>
+      <button class="preset-btn" onclick="flyTo(40.0150,-105.2705,12,'Boulder')">Boulder</button>
+      <button class="preset-btn" onclick="flyTo(38.8339,-104.8214,11,'Colorado Springs')">Colo. Springs</button>
+      <button class="preset-btn" onclick="flyTo(39.7547,-105.2211,12,'Golden / Lookout')">Golden</button>
+      <button class="preset-btn" onclick="flyTo(39.6497,-104.9353,12,'Cherry Hills')">Cherry Hills</button>
+      <button class="preset-btn" onclick="flyTo(39.7447,-104.9472,13,'Hilltop')">Hilltop</button>
+    </div>
+    <div class="map-legend">
+      <span><span class="legend-dot" style="background:#1a7a4a"></span>Score 85+ excellent</span>
+      <span><span class="legend-dot" style="background:#2a6496"></span>Score 70–84 good</span>
+      <span><span class="legend-dot" style="background:#8a5a00"></span>Score 55–69 fair</span>
+      <span><span class="legend-dot" style="background:#a83232"></span>Score &lt;55</span>
+      <span><span class="legend-dot" style="background:#533cb7;border:2px solid #533cb7"></span>Zone boundary</span>
+    </div>
+    <div id="map-container"></div>
+    <div class="zone-overlay-info" id="map-status">
+      Run the daily briefing to plot live listings on the map. Zone boundaries shown are approximate view corridors.
+    </div>
+  </div>
+
+  <!-- ── FUTURE PANEL ── -->
+  <div class="view-panel" id="vpanel-future">
+  <div class="future-panel">
+    <div class="future-header">
+      <div class="future-icon">🚀</div>
+      <div>
+        <div class="future-title">Future Layer — 2030–2045 Demand Forecast</div>
+        <div class="future-sub">Where mobility disruption, demographics &amp; climate unlock today's hidden gems</div>
+        <div id="future-data-badge" style="font-size:10.5px;margin-top:5px;opacity:0.7;">🤖 Loading latest intelligence…</div>
+      </div>
+    </div>
+
+    <div class="future-tabs">
+      <button class="ftab active" onclick="showFTab('mobility')">🚗 Mobility shift</button>
+      <button class="ftab" onclick="showFTab('evtol')">🚁 eVTOL / vertiports</button>
+      <button class="ftab" onclick="showFTab('demography')">👥 Demographics</button>
+      <button class="ftab" onclick="showFTab('gems')">💎 Hidden gems</button>
+      <button class="ftab" onclick="showFTab('scenarios')">📊 Scenario table</button>
+    </div>
+
+    <!-- MOBILITY TAB -->
+    <div class="future-content active" id="ftab-mobility">
+      <div class="horizon-grid">
+        <div class="horizon-card">
+          <div class="horizon-year">2028–2031</div>
+          <div class="horizon-title">Robo-taxi saturation</div>
+          <div class="horizon-desc">Waymo, Tesla FSD, and Zoox deploy at scale in Denver metro. Cost per mile drops below $0.40 — cheaper than car ownership. Commute burden collapses for suburban zones.</div>
+        </div>
+        <div class="horizon-card">
+          <div class="horizon-year">2032–2037</div>
+          <div class="horizon-title">Commute-distance decoupling</div>
+          <div class="horizon-desc">Productive travel time means 45-min commutes are no longer a penalty. Research shows AVs could expand viable residential radii by 30–68%. Foothills zones reprice upward.</div>
+        </div>
+        <div class="horizon-card">
+          <div class="horizon-year">2038–2045</div>
+          <div class="horizon-title">Parking land reclamation</div>
+          <div class="horizon-desc">Denver's 75,000+ parking spaces (est.) begin converting to residential and park. Urban core density rises. Suburban "view + nature" premium strengthens as contrast sharpens.</div>
+        </div>
+      </div>
+      <div class="zone-future-grid" id="mobility-zone-grid"></div>
+      <div class="future-note">Sources: MIT urban sprawl modeling (68% city radius expansion), ScienceDirect AV land-use analysis, DWS Real Estate AV Impact Report 2025. AV adoption projected to reach 50% of road travel by 2040 (CNBC/Gartner).</div>
+    </div>
+
+    <!-- EVTOL TAB -->
+    <div class="future-content" id="ftab-evtol">
+      <div class="horizon-grid">
+        <div class="horizon-card">
+          <div class="horizon-year">Colorado NOW</div>
+          <div class="horizon-title">NREL + 76 airports mapped</div>
+          <div class="horizon-desc">Colorado's NREL 2025 study assessed all 76 state airports for eVTOL readiness. Rocky Mountain Metro (RMMA) in Broomfield has a 30-yr master plan including eVTOL platforms in its Verve Innovation Park.</div>
+        </div>
+        <div class="horizon-card">
+          <div class="horizon-year">2028–2032</div>
+          <div class="horizon-title">Vertiport network emerges</div>
+          <div class="horizon-desc">Morgan Stanley projects $1–5T global market by 2040. Joby Aviation reached FAA Stage 4 certification in Nov 2025. LA and Houston targeted for 2030 launch. Denver corridor follows 2–3 years later.</div>
+        </div>
+        <div class="horizon-card">
+          <div class="horizon-year">2033–2045</div>
+          <div class="horizon-title">Property near vertiports reprices</div>
+          <div class="horizon-desc">Proximity to vertiports will act like proximity to metro stations — studies show 5–15% value uplift within 1km. Hilltop and Cherry Hills (flat rooftops, open air) are prime vertiport candidates.</div>
+        </div>
+      </div>
+      <div style="background:rgba(99,180,255,0.08);border:1px solid rgba(99,180,255,0.2);border-radius:10px;padding:14px 16px;margin-bottom:1rem;">
+        <div style="font-size:12px;font-weight:600;color:#63b4ff;margin-bottom:8px;">🗺 Likely Denver Metro Vertiport Nodes (2030–2035 est.)</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;">
+          <div style="font-size:11.5px;color:#a8c0d8;background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:7px;"><strong style="color:#e8edf2">Rocky Mtn Metro Airport</strong><br>Broomfield · eVTOL-ready master plan · 15 min from Hilltop</div>
+          <div style="font-size:11.5px;color:#a8c0d8;background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:7px;"><strong style="color:#e8edf2">DIA Vertiport Hub</strong><br>Aurora · 2030 target · connects foothills to airport in ~12 min</div>
+          <div style="font-size:11.5px;color:#a8c0d8;background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:7px;"><strong style="color:#e8edf2">Cherry Creek Rooftop</strong><br>Potential: Cherry Creek Mall roof · serves Hilltop + Cherry Hills</div>
+          <div style="font-size:11.5px;color:#a8c0d8;background:rgba(255,255,255,0.05);padding:8px 10px;border-radius:7px;"><strong style="color:#e8edf2">Golden / Lookout Node</strong><br>RMMA adjacency · serves foothills + Lookout Mountain corridor</div>
+        </div>
+      </div>
+      <div class="zone-future-grid" id="evtol-zone-grid"></div>
+      <div class="future-note">Sources: NREL Colorado eVTOL airport study 2025, Rocky Mountain Metro Airport Verve Innovation Park 30-yr plan, Joby Aviation FAA Stage 4 certification Nov 2025, Morgan Stanley urban air mobility $1–5T forecast 2040, Utah DOT Rocky Mountain 4-state eVTOL testing corridor.</div>
+    </div>
+
+    <!-- DEMOGRAPHICS TAB -->
+    <div class="future-content" id="ftab-demography">
+      <div class="horizon-grid">
+        <div class="horizon-card">
+          <div class="horizon-year">2026–2032</div>
+          <div class="horizon-title">Millennial peak buying</div>
+          <div class="horizon-desc">72.5M Millennials hit peak earning years. They accept 200–300 sqft less space for walkability and nature access (Urban Land Institute). Views + outdoor access = premium they'll pay for.</div>
+        </div>
+        <div class="horizon-card">
+          <div class="horizon-year">2030–2038</div>
+          <div class="horizon-title">Gen Z reshapes demand</div>
+          <div class="horizon-desc">Gen Z = 30% of workforce by 2030. Climate-conscious, remote-work native. Prioritizes nature access, outdoor living, fiber internet. "18-hour city" appeal — Denver is a top-5 target city.</div>
+        </div>
+        <div class="horizon-card">
+          <div class="horizon-year">2030–2040</div>
+          <div class="horizon-title">Boomer housing liberation</div>
+          <div class="horizon-desc">9M Boomer-owned homes vacate by 2035 (MBA). Large estate lots in Cherry Hills and Genesee enter market. Rare inventory at scale — well-priced today relative to future demand from younger buyers.</div>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);border-radius:10px;padding:14px 16px;margin-bottom:1rem;">
+        <div style="font-size:12px;font-weight:600;color:#63b4ff;margin-bottom:10px;">What the next generation of buyers will pay a premium for</div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;">
+          <div style="font-size:11.5px;color:#a8c0d8;text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:7px;">🏔<br><strong style="color:#e8edf2;font-size:12px">Mountain views</strong><br>Nature-immersion premium rises</div>
+          <div style="font-size:11.5px;color:#a8c0d8;text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:7px;">🌊<br><strong style="color:#e8edf2;font-size:12px">Water access</strong><br>Lake / reservoir frontage scarce</div>
+          <div style="font-size:11.5px;color:#a8c0d8;text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:7px;">☀️<br><strong style="color:#e8edf2;font-size:12px">South-facing</strong><br>Solar passive design, warmth</div>
+          <div style="font-size:11.5px;color:#a8c0d8;text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:7px;">🛜<br><strong style="color:#e8edf2;font-size:12px">Fiber + cell</strong><br>Remote work non-negotiable</div>
+          <div style="font-size:11.5px;color:#a8c0d8;text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:7px;">🦌<br><strong style="color:#e8edf2;font-size:12px">Wildlife / open space</strong><br>Backs to park or conservancy</div>
+          <div style="font-size:11.5px;color:#a8c0d8;text-align:center;padding:10px;background:rgba(255,255,255,0.04);border-radius:7px;">⚡<br><strong style="color:#e8edf2;font-size:12px">EV charging ready</strong><br>Grid-resilient infrastructure</div>
+        </div>
+      </div>
+      <div class="zone-future-grid" id="demo-zone-grid"></div>
+      <div class="future-note">Sources: Cushman &amp; Wakefield Demographic Shifts 2030, Urban Land Institute Millennial housing survey, MBA 9M Boomer home projection 2035, Gen Z 30% workforce share by 2030 (Pew), HAR.com Gen Z housing market analysis 2025.</div>
+    </div>
+
+    <!-- HIDDEN GEMS TAB -->
+    <div class="future-content" id="ftab-gems">
+      <div style="font-size:12.5px;color:#7a9ab8;margin-bottom:1rem;line-height:1.6;">These are properties and sub-zones that are <strong style="color:#e8edf2">underpriced today</strong> because their value thesis depends on mobility changes and demographic shifts that haven't arrived yet. The thesis: buy before the infrastructure catches up.</div>
+      <div class="hidden-gem-grid" id="gems-list"></div>
+      <div class="future-note">Uplift projections are illustrative estimates based on comparable transit-proximity research (metro station premium 5–25%), AV sprawl modeling, and demographic demand projections. Not financial advice. Actual returns depend on execution timing, interest rates, and adoption pace.</div>
+    </div>
+
+    <!-- SCENARIOS TAB -->
+    <div class="future-content" id="ftab-scenarios">
+      <div style="font-size:12.5px;color:#7a9ab8;margin-bottom:1rem;">How does each zone perform under three possible 2035 futures? Select a scenario to see the impact table.</div>
+      <div class="scenario-toggle">
+        <button class="scen-btn active" onclick="showScenario('base')">📈 Base case</button>
+        <button class="scen-btn" onclick="showScenario('bull')">🚀 Bull: full mobility</button>
+        <button class="scen-btn" onclick="showScenario('bear')">⚠️ Bear: slow adoption</button>
+      </div>
+
+      <div class="scen-content show" id="scen-base">
+        <table class="impact-table">
+          <tr><th>Zone</th><th>2035 demand driver</th><th>Price delta vs today</th><th>Risk</th></tr>
+          <tr><td class="zone-col">Foothills / Genesee</td><td>AV commute unlocks, eVTOL vertiport near RMMA, Boomer estate turnover</td><td class="delta-pos">+22–35%</td><td>Wildfire insurance, I-70 congestion persists until ~2032</td></tr>
+          <tr><td class="zone-col">Lookout Mtn / Golden</td><td>Best views repriced as commute pain dissolves, Golden vertiport node</td><td class="delta-pos">+28–42%</td><td>Winding roads limit AV routing, steeper than avg insurance</td></tr>
+          <tr><td class="zone-col">Hilltop / Crestmoor</td><td>Flat rooftop vertiport candidate, Millennial peak demand, Cherry Creek adjacency</td><td class="delta-pos">+18–28%</td><td>Already expensive, limited inventory constrains supply response</td></tr>
+          <tr><td class="zone-col">Cherry Hills / GV</td><td>Boomer estate release, eVTOL access, Gen Z nature + prestige demand</td><td class="delta-pos">+15–25%</td><td>Requires $2M+ entry, liquidity thinner in downturns</td></tr>
+          <tr><td class="zone-col">Highlands / Sloan's Lake</td><td>Walkability + urban density premium strengthens, urban core densification</td><td class="delta-neu">+10–18%</td><td>Already priced for urban access, less upside from mobility shift</td></tr>
+          <tr><td class="zone-col">Castle Pines / Backcountry</td><td>AV commute helps but limited view premium, suburban car-dependent DNA</td><td class="delta-neu">+8–15%</td><td>Slowest to reprice, suburban identity limits Gen Z appeal</td></tr>
+        </table>
+      </div>
+
+      <div class="scen-content" id="scen-bull">
+        <table class="impact-table">
+          <tr><th>Zone</th><th>Bull scenario driver</th><th>Price delta vs today</th><th>Who wins most</th></tr>
+          <tr><td class="zone-col">Lookout Mtn / Golden</td><td>AV fully eliminates commute penalty; 40-min trip = productive work time; vertiport to DIA in 8 min</td><td class="delta-pos">+45–70%</td><td>Remote workers, tech execs who want dramatic views</td></tr>
+          <tr><td class="zone-col">Foothills / Genesee</td><td>Ridgeline lots with 180° views + wildlife become most sought-after; supply permanently constrained</td><td class="delta-pos">+40–60%</td><td>Wealth migration from CA/TX, outdoor-lifestyle buyers</td></tr>
+          <tr><td class="zone-col">Cherry Hills / GV</td><td>Lake + mountain combo + vertiport access = Miami-style compound premium</td><td class="delta-pos">+35–50%</td><td>Ultra-HNW buyers, international wealth migration</td></tr>
+          <tr><td class="zone-col">Hilltop / Crestmoor</td><td>Vertiport rooftop at Cherry Creek; 4-min eVTOL to DIA; urban + view pinnacle</td><td class="delta-pos">+30–45%</td><td>Millennial professionals who want it all</td></tr>
+          <tr><td class="zone-col">Highlands / Sloan's Lake</td><td>Urban density wave raises all boats; lake frontage becomes scarcer</td><td class="delta-neu">+18–28%</td><td>Gen Z urban buyers, rental investors</td></tr>
+          <tr><td class="zone-col">Castle Pines / Backcountry</td><td>Commute irrelevant; families want space + schools; Pikes Peak views get discovered</td><td class="delta-neu">+20–32%</td><td>Family buyers escaping higher-priced zones</td></tr>
+        </table>
+      </div>
+
+      <div class="scen-content" id="scen-bear">
+        <table class="impact-table">
+          <tr><th>Zone</th><th>Bear scenario risk</th><th>Price delta vs today</th><th>Relative safe haven</th></tr>
+          <tr><td class="zone-col">Hilltop / Crestmoor</td><td>Urban access already priced in — least dependent on mobility shift</td><td class="delta-pos">+12–18%</td><td>Strongest floor: Cherry Creek demand independent of AV</td></tr>
+          <tr><td class="zone-col">Cherry Hills / GV</td><td>Prestige floor holds; Boomer turnover creates buying opportunity</td><td class="delta-pos">+8–15%</td><td>Institutional money + international buyers support floor</td></tr>
+          <tr><td class="zone-col">Highlands / Sloan's Lake</td><td>Urban walkability requires no AV; already works without mobility shift</td><td class="delta-pos">+10–16%</td><td>Most resilient to slow adoption — value already proven</td></tr>
+          <tr><td class="zone-col">Foothills / Genesee</td><td>Commute pain persists; insurance costs rise; wildfire seasons worsen</td><td class="delta-neu">+4–10%</td><td>Supply constrained; still appreciates but slowly</td></tr>
+          <tr><td class="zone-col">Lookout Mtn / Golden</td><td>Winding roads incompatible with early-gen AV; commute penalty stays</td><td class="delta-neu">+2–8%</td><td>Golden lifestyle value holds; views still premium</td></tr>
+          <tr><td class="zone-col">Castle Pines / Backcountry</td><td>Car-dependent without AV; 45+ min commute stays painful; weakest demand</td><td class="delta-neg">−2–+5%</td><td>Only value: schools + space for growing families</td></tr>
+        </table>
+      </div>
+      <div class="future-note">Scenarios are illustrative projections based on academic research and industry forecasts — not investment advice. Base case assumes AV mainstream adoption 2030–2035, eVTOL commercial ops near Denver 2032–2036, Millennial peak demand 2027–2033. Bull assumes accelerated adoption timelines. Bear assumes regulatory delays push AV/eVTOL to 2038+.</div>
+    </div><!-- end ftab-scenarios -->
+  </div><!-- end future-panel -->
+  </div><!-- end vpanel-future -->
+
+  <!-- ── CHAT PANEL ── -->
+  <div class="view-panel" id="vpanel-chat">
+  <div class="section-header" style="margin-top:0.5rem;">
+    <div class="section-title">Ask Vista — View &amp; Urban Access Specialist</div>
+  </div>
+  <div class="chat-wrap">
+    <div class="chat-header">
+      <div class="chat-avatar">V</div>
+      <div><div class="chat-name">Vista · View + Urban Access + Future Specialist</div><div class="chat-status">● Online</div></div>
+    </div>
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg agent">
+        <div class="msg-bubble">Hi! I'm Vista. Use the tabs above to switch between Zone Analysis, Live Listings, the Map view, and the Future Layer. Ask me anything — zone tradeoffs, commute times, specific neighborhoods, future mobility impact, or what a listing's Zestimate gap means. I also know the tool: just ask me how to use any feature.</div>
+        <div class="msg-time">Now</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Ask about zones, views, commutes, the map, or specific listings…" onkeydown="if(event.key==='Enter')sendMessage()">
+      <button class="chat-send" id="send-btn" onclick="sendMessage()">Send</button>
+    </div>
+  </div>
+  </div><!-- end vpanel-chat -->
+
+  <div class="disclaimer">This tool uses AI to analyze publicly available real estate data and neighborhood characteristics as of April 2026. Listings shown use Apify/Redfin scraper data. Urban access and view scores are estimates and should be independently verified. Always work with a licensed Colorado real estate agent. Not financial advice.</div>
+</main>
+</div>
+
+<script>
+const ZONES = {
+  foothills:{name:"Foothills Corridor",sub:"Genesee · Riva Chase · Evergreen",color:"#2a6496",score:"A+",tagClass:"score-a",
+    desc:"True mountain living 20–35 min from downtown. South-facing ridgeline lots at 6,000–7,500ft. Elk corridors, open space, I-70 direct to ski resorts.",
+    medPrice:"$1.1M–$3.5M",commute:"22–35 min",
+    dims:{view:98,commute:62,urban:{dining:38,grocery:55,medical:45,culture:30,fitness:52,schools:68,walk:30}}},
+  hilltop:{name:"Hilltop / Crestmoor",sub:"Cranmer Park · Robinson Park · Cherry Creek adj.",color:"#5a8e3a",score:"A",tagClass:"score-a",
+    desc:"Denver's highest residential plateau. Cranmer Park sweeps the full Front Range. Cherry Creek North 5 min. Best urban + view balance in city limits.",
+    medPrice:"$1.5M–$4M",commute:"12–18 min",
+    dims:{view:82,commute:95,urban:{dining:92,grocery:88,medical:85,culture:90,fitness:90,schools:95,walk:72}}},
+  cherryhills:{name:"Cherry Hills / Greenwood Village",sub:"Buell Mansion · Glenmoor · Cherry Hills Farm",color:"#8a4a1a",score:"A",tagClass:"score-a",
+    desc:"Denver's most prestigious suburb. Mountain views + Buell Lake frontage. Two championship golf clubs. Estate lots 1–10 acres. Rolling terrain.",
+    medPrice:"$2M–$10M+",commute:"18–28 min",
+    dims:{view:80,commute:82,urban:{dining:78,grocery:82,medical:88,culture:65,fitness:85,schools:98,walk:48}}},
+  highlands:{name:"Highlands / Sloan's Lake",sub:"West Highlands · Sloan's Lake · Edgewater",color:"#6a3a8a",score:"B+",tagClass:"score-b",
+    desc:"Urban hillside NW of downtown. West-facing Sloan's Lake: mountain reflections on water. Denver's only urban lake+mountain combo. Vibrant walkable dining.",
+    medPrice:"$650K–$2M",commute:"8–15 min",
+    dims:{view:68,commute:98,urban:{dining:95,grocery:90,medical:72,culture:88,fitness:92,schools:72,walk:98}}},
+  lookout:{name:"Lookout Mountain / Golden",sub:"Lookout Mountain · Mount Vernon · Golden",color:"#c04a20",score:"A+",tagClass:"score-a",
+    desc:"Perched at 6,000–7,000ft above Golden. Full Rocky Mountain panorama west, Denver city lights east. Golden's walkable Washington Ave 7 min drive.",
+    medPrice:"$900K–$4M",commute:"30–42 min",
+    dims:{view:99,commute:55,urban:{dining:62,grocery:60,medical:50,culture:55,fitness:60,schools:65,walk:45}}},
+  castlepines:{name:"Castle Pines / Backcountry",sub:"Backcountry · Castle Pines Village · Highlands Ranch S.",color:"#1a6a5a",score:"B+",tagClass:"score-b",
+    desc:"Gated communities with ridgeline lots south of Denver. Pikes Peak visibility. Backcountry resort amenities. Newer construction at competitive per-sqft.",
+    medPrice:"$800K–$3M",commute:"35–55 min",
+    dims:{view:78,commute:48,urban:{dining:70,grocery:78,medical:72,culture:45,fitness:75,schools:82,walk:35}}}
+};
+
+// ── Zone search intelligence ──────────────────────────────
+// Redfin search URLs and metadata per zone
+const ZONE_REDFIN = {
+  foothills:   {
+    label: 'Foothills / Genesee / Evergreen',
+    zips: ['80454','80439','80403'], price_max: '4M'
+  },
+  hilltop: {
+    label: 'Hilltop / Crestmoor (80246)',
+    zips: ['80246'], price_max: '5M'
+  },
+  cherryhills: {
+    label: 'Cherry Hills Village / Greenwood Village',
+    zips: ['80113','80111'], price_max: '10M'
+  },
+  highlands: {
+    label: 'Highlands / Sloan\'s Lake (80211)',
+    zips: ['80211','80212'], price_max: '2.5M'
+  },
+  lookout: {
+    label: 'Lookout Mountain / Golden',
+    zips: ['80401','80457'], price_max: '4M'
+  },
+  castlepines: {
+    label: 'Castle Pines / Backcountry',
+    zips: ['80108'], price_max: '3M'
+  }
+};
+
+// Future-proof scores — loaded from GitHub, with hardcoded fallback
+// Update YOUR_GITHUB_USERNAME below after you push to GitHub
+const GITHUB_FUTURE_DATA_URL = 'https://raw.githubusercontent.com/YOUR_GITHUB_USERNAME/denver-views/main/future_data.json';
+
+let ZONE_FUTURE = {
+  foothills:   { score: 91, driver: 'Waymo Denver 2026 launch collapses I-70 commute penalty', evtol: 82, av: 93 },
+  hilltop:     { score: 78, driver: 'Urban access already priced in — resilient floor', evtol: 62, av: 68 },
+  cherryhills: { score: 77, driver: 'Boomer estate release creates rare inventory window', evtol: 66, av: 72 },
+  highlands:   { score: 83, driver: 'Walkable + transit-ready — survives any mobility scenario', evtol: 68, av: 74 },
+  lookout:     { score: 94, driver: 'Waymo explicitly targeting mountain roads — commute penalty gone entirely', evtol: 86, av: 97 },
+  castlepines: { score: 73, driver: 'Car-dependent neutralised by AV adoption 2030-2033', evtol: 58, av: 76 }
+};
+
+let futureDataMeta = { updated: 'built-in', update_summary: '' };
+
+async function loadFutureData() {
+  try {
+    const resp = await fetch(GITHUB_FUTURE_DATA_URL);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+    if (data.zones) {
+      ZONE_FUTURE = data.zones;
+      futureDataMeta = { updated: data.updated || '?', update_summary: data.update_summary || '' };
+      // Update the badge if it exists
+      const badge = document.getElementById('future-data-badge');
+      if (badge) badge.textContent = `🤖 Intelligence updated ${data.updated}`;
+    }
+  } catch(e) {
+    console.info('Using built-in future data (GitHub fetch unavailable):', e.message);
+  }
+}
+
+// Zone intelligence overlays
+const ZONE_URBAN = {
+  foothills:   {dining:38,grocery:55,medical:45,culture:30,fitness:52,schools:68,walk:30},
+  hilltop:     {dining:92,grocery:88,medical:85,culture:90,fitness:90,schools:95,walk:72},
+  cherryhills: {dining:78,grocery:82,medical:88,culture:65,fitness:85,schools:98,walk:48},
+  highlands:   {dining:95,grocery:90,medical:72,culture:88,fitness:92,schools:72,walk:98},
+  lookout:     {dining:62,grocery:60,medical:50,culture:55,fitness:60,schools:65,walk:45},
+  castlepines: {dining:70,grocery:78,medical:72,culture:45,fitness:75,schools:82,walk:35}
+};
+const ZONE_VIEW = {
+  foothills:95, hilltop:82, cherryhills:78,
+  highlands:68, lookout:99, castlepines:76
+};
+
+// ── Recommendation engine ─────────────────────────────────
+
+// Verified Redfin city/area URLs — gathered from actual Redfin search results.
+// Each zone gets multiple searches covering its full geographic area.
+const ZONE_SEARCHES = {
+  foothills: [
+    { label: 'Genesee', url: 'https://www.redfin.com/city/23050/CO/Genesee' },
+    { label: 'Evergreen', url: 'https://www.redfin.com/city/5695/CO/Evergreen' },
+    { label: 'Golden', url: 'https://www.redfin.com/city/8476/CO/Golden' },
+    { label: 'Morrison', url: 'https://www.redfin.com/city/13167/CO/Morrison' },
+  ],
+  hilltop: [
+    { label: 'Hilltop Denver', url: 'https://www.redfin.com/neighborhood/5585/CO/Denver/Hilltop' },
+    { label: 'Crestmoor Denver', url: 'https://www.redfin.com/neighborhood/5580/CO/Denver/Crestmoor' },
+    { label: 'Zip 80246', url: 'https://www.redfin.com/zipcode/80246' },
+  ],
+  cherryhills: [
+    { label: 'Cherry Hills Village', url: 'https://www.redfin.com/city/3822/CO/Cherry-Hills-Village' },
+    { label: 'Greenwood Village', url: 'https://www.redfin.com/city/8827/CO/Greenwood-Village' },
+  ],
+  highlands: [
+    { label: 'Highlands Denver', url: 'https://www.redfin.com/neighborhood/5587/CO/Denver/Highlands' },
+    { label: "Sloan's Lake", url: 'https://www.redfin.com/neighborhood/5598/CO/Denver/Sloans-Lake' },
+    { label: 'Edgewater', url: 'https://www.redfin.com/city/5256/CO/Edgewater' },
+  ],
+  lookout: [
+    { label: 'Lookout Mtn / Genesee', url: 'https://www.redfin.com/neighborhood/192535/CO/Genesee/Lookout-Mountain' },
+    { label: 'Golden', url: 'https://www.redfin.com/city/8476/CO/Golden' },
+    { label: 'Mount Vernon', url: 'https://www.redfin.com/zipcode/80401' },
+  ],
+  castlepines: [
+    { label: 'Castle Pines', url: 'https://www.redfin.com/city/3695/CO/Castle-Pines' },
+    { label: 'Backcountry / Highlands Ranch', url: 'https://www.redfin.com/city/8840/CO/Highlands-Ranch' },
+  ],
+};
+
+// Keep ZONE_REDFIN_BASES as primary URL for the main button (first search in list)
+const ZONE_REDFIN_BASES = Object.fromEntries(
+  Object.entries(ZONE_SEARCHES).map(([k, searches]) => [k, searches[0].url])
+);
+
+function buildRedfinUrl(zoneKey) {
+  const base    = ZONE_REDFIN_BASES[zoneKey];
+  const budget  = parseFloat(document.getElementById('f-budget').value) || 7;
+  const sfOnly  = document.getElementById('opt-sfonly')?.checked !== false;
+  const newOnly = document.getElementById('opt-new-only')?.checked;
+
+  // Redfin uses path-based filters: /houses-for-sale, /new-listings etc.
+  // then appends query params for price/beds
+  let path = sfOnly ? '/houses-for-sale' : '';
+  if (newOnly) path = '/new-listings';
+
+  // Price and beds go as query params
+  const maxPriceRaw = Math.round(budget * 1000000);
+  const params = new URLSearchParams({
+    max_price: maxPriceRaw,
+    num_beds:  3,
+  });
+
+  return `${base}${path}?${params}`;
+}
+
+function generateRecommendations() {
+  const weights    = getWeights();
+  const futureFocus = document.getElementById('opt-future')?.checked;
+  const viewFocus  = document.getElementById('opt-view')?.checked;
+  const btn = document.getElementById('run-btn');
+  btn.disabled = true; btn.textContent = '⟳ Scoring…';
+
+  // Score every zone
+  const scored = Object.entries(ZONES).map(([key, z]) => {
+    const urban   = calcUrbanScore(ZONE_URBAN[key], weights);
+    const view    = ZONE_VIEW[key];
+    const commute = z.dims.commute;
+    const future  = ZONE_FUTURE[key]?.score || 70;
+
+    // Base composite
+    let composite = calcComposite(view, urban, commute);
+
+    // Optional boosts from checkboxes
+    if (futureFocus) composite = Math.round(composite * 0.72 + future * 0.28);
+    if (viewFocus)   composite = Math.round(composite * 0.85 + view   * 0.15);
+
+    // Clamp
+    composite = Math.min(99, composite);
+
+    return { key, z, urban, view, commute, future, composite };
+  });
+
+  scored.sort((a, b) => b.composite - a.composite);
+
+  // Render
+  document.getElementById('rec-empty').style.display = 'none';
+  const container = document.getElementById('rec-results');
+  container.style.display = 'block';
+  container.innerHTML = '';
+
+  // Summary header
+  const topZone = scored[0];
+  const summaryEl = document.createElement('div');
+  summaryEl.style.cssText = 'margin-bottom:1.25rem;padding:14px 16px;background:var(--accent-bg);border-radius:10px;border-left:3px solid var(--accent);';
+  summaryEl.innerHTML = `
+    <div style="font-size:13px;font-weight:600;color:var(--accent);margin-bottom:4px;">Your top match based on current priorities</div>
+    <div style="font-size:15px;font-weight:700;color:var(--text)">${topZone.z.name} · Composite ${topZone.composite}</div>
+    <div style="font-size:12.5px;color:var(--muted);margin-top:3px;">${topZone.z.desc}</div>
+    ${futureFocus ? `<div style="font-size:11.5px;color:var(--teal);margin-top:6px;">🚀 Future score ${topZone.future}/100 — ${ZONE_FUTURE[topZone.key]?.driver}</div>` : ''}
+  `;
+  container.appendChild(summaryEl);
+
+  // One card per zone, ranked
+  scored.forEach((s, idx) => {
+    const zr   = ZONE_REDFIN[s.key];
+    const fz   = ZONE_FUTURE[s.key];
+    const url  = buildRedfinUrl(s.key);
+    const rank = ['🥇','🥈','🥉','4.','5.','6.'][idx];
+    const medal = idx < 3;
+
+    const card = document.createElement('div');
+    card.style.cssText = `margin-bottom:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface);${idx===0?'border-color:var(--accent);':''}`;
+
+    // Score bar width
+    const barW = s.composite;
+    const barColor = s.composite>=85?'var(--green)':s.composite>=70?'var(--accent)':s.composite>=55?'var(--amber)':'var(--red)';
+
+    // Top urban needs met
+    const topNeeds = urbanKeys
+      .filter(k => weights[k] >= 7)
+      .map(k => `${urbanIcons[k]} ${urbanLabels[k]} ${ZONE_URBAN[s.key][k]}`)
+      .join(' · ') || 'No high-priority needs set';
+
+    card.innerHTML = `
+      <div style="padding:14px 16px 10px;">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;">
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text)">${rank} ${s.z.name}</div>
+            <div style="font-size:11.5px;color:var(--muted);margin-top:1px">${s.z.sub}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            <div style="font-size:22px;font-weight:700;${pillStyle(s.composite)};padding:4px 10px;border-radius:8px;display:inline-block">${s.composite}</div>
+            <div style="font-size:10px;color:var(--hint);margin-top:2px">composite</div>
+          </div>
+        </div>
+
+        <div style="height:4px;background:var(--surface2);border-radius:2px;margin-bottom:10px;">
+          <div style="height:4px;width:${barW}%;background:${barColor};border-radius:2px;transition:width 0.5s"></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+          <div style="font-size:11px;background:var(--surface2);border-radius:6px;padding:6px 8px;">
+            <div style="color:var(--hint);margin-bottom:2px;">🏔 View</div>
+            <div style="font-weight:600;color:var(--text)">${s.view}/100</div>
+          </div>
+          <div style="font-size:11px;background:var(--surface2);border-radius:6px;padding:6px 8px;">
+            <div style="color:var(--hint);margin-bottom:2px;">🏙 Urban</div>
+            <div style="font-weight:600;color:var(--text)">${s.urban}/100</div>
+          </div>
+          <div style="font-size:11px;background:var(--surface2);border-radius:6px;padding:6px 8px;">
+            <div style="color:var(--hint);margin-bottom:2px;">🚀 Future</div>
+            <div style="font-weight:600;color:${s.future>=85?'var(--green)':s.future>=70?'var(--accent)':'var(--amber)'}">${s.future}/100</div>
+          </div>
+        </div>
+
+        <div style="font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.5;">
+          <strong style="color:var(--text)">Your priorities met:</strong> ${topNeeds}
+        </div>
+
+        ${futureFocus ? `<div style="font-size:11.5px;padding:6px 10px;background:var(--teal-bg);border-radius:6px;color:var(--teal);margin-bottom:8px;">
+          🚗 AV score ${fz?.av || '–'} · 🚁 eVTOL score ${fz?.evtol || '–'} · ${fz?.driver || ''}
+        </div>` : ''}
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">
+          ${s.z.medPrice} · ${s.z.commute} to downtown
+        </div>
+      </div>
+      <div style="padding:10px 16px;background:var(--surface2);border-top:1px solid var(--border);display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <a href="${url}" target="_blank" style="padding:7px 14px;background:var(--accent);color:#fff;border-radius:7px;font-size:12.5px;font-weight:500;text-decoration:none;">Open filtered →</a>
+        ${ZONE_SEARCHES[s.key].map((search, i) =>
+          `<a href="${search.url}" target="_blank" style="padding:7px 12px;background:var(--surface);border:1px solid var(--border2);color:var(--muted);border-radius:7px;font-size:11.5px;text-decoration:none;">${search.label}</a>`
+        ).join('')}
+      </div>
+    `;
+    container.appendChild(card);
+  });
+
+  // Footer tip
+  const tip = document.createElement('div');
+  tip.style.cssText = 'font-size:11.5px;color:var(--muted);padding:12px 16px;background:var(--surface2);border-radius:8px;margin-top:4px;line-height:1.7;';
+  tip.innerHTML = `<strong>Tip:</strong> Open the Redfin links above, then apply your own price, bed, and school filters. Save each search as a Redfin alert and you'll get emailed the moment a new listing hits. Adjust the sliders on the left any time — scores update instantly.`;
+  container.appendChild(tip);
+
+  btn.disabled = false; btn.textContent = '🔍 Generate My Searches';
+  document.getElementById('last-run-text').textContent = `Last scored: ${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}`;
+  switchView('list');
+  addAgentMessage(`Generated ranked search recommendations. <strong>${topZone.z.name}</strong> is your top match at composite ${topZone.composite}. The Redfin links are ready to open — just click through and save them as alerts.`);
+}
+
+const urbanKeys = ['dining','grocery','medical','culture','fitness','schools','walk'];
+const urbanIcons = {dining:'🍽️',grocery:'🛒',medical:'🏥',culture:'🎭',fitness:'🏋️',schools:'🏫',walk:'☕'};
+const urbanLabels = {dining:'Dining',grocery:'Grocery',medical:'Medical',culture:'Arts',fitness:'Fitness',schools:'Schools',walk:'Walkable'};
+
+let currentZone = 'all';
+
+function getWeights() {
+  const w = {};
+  urbanKeys.forEach(k => { w[k] = parseInt(document.getElementById('w-'+k).value); });
+  return w;
+}
+
+function calcUrbanScore(u, weights) {
+  let ws = 0, tw = 0;
+  urbanKeys.forEach(k => { const wt = weights[k]; if (wt > 0) { ws += u[k] * wt; tw += wt * 10; } });
+  return tw === 0 ? 50 : Math.round((ws / tw) * 100);
+}
+
+function calcComposite(v, u, c) { return Math.round(v * 0.38 + u * 0.38 + c * 0.24); }
+
+function scoreColor(s) {
+  return s >= 85 ? 'score-excellent' : s >= 70 ? 'score-good' : s >= 55 ? 'score-fair' : 'score-poor';
+}
+
+function pillStyle(s) {
+  if (s >= 85) return 'background:var(--green-bg);color:var(--green)';
+  if (s >= 75) return 'background:var(--accent-bg);color:var(--accent)';
+  if (s >= 65) return 'background:var(--amber-bg);color:var(--amber)';
+  return 'background:var(--red-bg);color:var(--red)';
+}
+
+function updateWeights() {
+  urbanKeys.forEach(k => { document.getElementById('wv-'+k).textContent = document.getElementById('w-'+k).value; });
+  buildZoneCards();
+}
+
+function selectZone(zone) {
+  currentZone = zone;
+  document.querySelectorAll('.zone-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('btn-'+(zone==='all'?'all':zone));
+  if (btn) btn.classList.add('active');
+  buildZoneCards();
+}
+
+function buildZoneCards() {
+  const container = document.getElementById('zone-cards');
+  container.innerHTML = '';
+  const weights = getWeights();
+  const entries = currentZone === 'all' ? Object.entries(ZONES) : Object.entries(ZONES).filter(([k]) => k === currentZone);
+  entries.sort((a,b) => {
+    const ua = calcUrbanScore(a[1].dims.urban, weights);
+    const ub = calcUrbanScore(b[1].dims.urban, weights);
+    return calcComposite(b[1].dims.view, ub, b[1].dims.commute) - calcComposite(a[1].dims.view, ua, a[1].dims.commute);
+  });
+
+  entries.forEach(([key, z]) => {
+    const card = document.createElement('div');
+    const urbanScore = calcUrbanScore(z.dims.urban, weights);
+    const composite = calcComposite(z.dims.view, urbanScore, z.dims.commute);
+    card.className = 'zone-card' + (currentZone === key ? ' selected' : '');
+    card.onclick = () => selectZone(key);
+
+    const bars = [
+      {icon:'🏔',label:'View quality',val:z.dims.view,color:z.color},
+      {icon:'🚗',label:'Commute ease',val:z.dims.commute,color:'#5a8e3a'},
+      {icon:'🌆',label:'Urban access',val:urbanScore,color:'#0f6e56'},
+    ].map(d => `<div class="dim-row"><span class="dim-icon">${d.icon}</span><span class="dim-label">${d.label}</span><div class="dim-bar-bg"><div class="dim-bar-fill" style="width:${d.val}%;background:${d.color}"></div></div><span class="dim-score-num" style="color:${d.color}">${d.val}</span></div>`).join('');
+
+    const urbanDetail = urbanKeys.map(k => {
+      const v = z.dims.urban[k]; const wt = weights[k];
+      return `<div style="text-align:center;${wt===0?'opacity:0.3':''}"><div style="font-size:11px">${urbanIcons[k]}</div><div style="font-size:10.5px;font-weight:600" class="${scoreColor(v)}">${v}</div><div style="font-size:9px;color:var(--hint)">${urbanLabels[k]}</div></div>`;
+    }).join('');
+
+    card.innerHTML = `
+      <div class="zc-header">
+        <div><div class="zc-name" style="color:${z.color}">${z.name}</div><div style="font-size:10px;color:var(--hint);margin-top:1px">${z.sub}</div></div>
+        <div style="text-align:center"><div style="font-size:18px;font-weight:700;padding:6px 10px;border-radius:8px;${pillStyle(composite)}">${composite}</div><div style="font-size:9px;color:var(--hint)">composite</div></div>
+      </div>
+      <div class="zc-desc">${z.desc}</div>
+      <div class="dim-bars">${bars}</div>
+      <div style="background:var(--surface2);border-radius:7px;padding:8px 10px;margin-bottom:10px">
+        <div style="font-size:9.5px;color:var(--hint);margin-bottom:6px;font-weight:600;letter-spacing:0.05em">URBAN BREAKDOWN</div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:2px">${urbanDetail}</div>
+      </div>
+      <div class="zc-bottom">
+        <div><div style="font-size:12px;font-weight:600">${z.medPrice}</div><div style="font-size:10px;color:var(--hint)">price range</div></div>
+        <div style="text-align:right"><div style="font-size:12px;color:var(--muted)">${z.commute}</div><div style="font-size:10px;color:var(--hint)">to downtown</div></div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function addUserMessage(t) {
+  const m = document.getElementById('chat-messages');
+  const d = document.createElement('div'); d.className='msg user';
+  d.innerHTML=`<div class="msg-bubble">${t}</div><div class="msg-time">Just now</div>`;
+  m.appendChild(d); m.scrollTop=m.scrollHeight;
+}
+function addAgentMessage(t) {
+  const m = document.getElementById('chat-messages');
+  const d = document.createElement('div'); d.className='msg agent';
+  d.innerHTML=`<div class="msg-bubble">${t}</div><div class="msg-time">${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>`;
+  m.appendChild(d); m.scrollTop=m.scrollHeight;
+}
+function showTyping() {
+  const m = document.getElementById('chat-messages');
+  const d = document.createElement('div'); d.className='msg agent'; d.id='typing-indicator';
+  d.innerHTML=`<div class="msg-bubble" style="padding:10px 16px"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  m.appendChild(d); m.scrollTop=m.scrollHeight;
+}
+function removeTyping() { const t=document.getElementById('typing-indicator'); if(t) t.remove(); }
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim(); if (!text) return;
+  const btn = document.getElementById('send-btn');
+  btn.disabled=true; input.value='';
+  addUserMessage(text); showTyping();
+
+  const weights = getWeights();
+  const wSummary = urbanKeys.map(k=>`${urbanLabels[k]}:${weights[k]}/10`).join(', ');
+
+  const sys = `You are Vista, a Denver real estate expert specializing in homes with mountain views, lake views, and hillside properties, with deep knowledge of urban access tradeoffs.
+
+ZONE SCORES:
+Foothills/Genesee: view 98, commute 62. Urban: dining 38, grocery 55, medical 45, culture 30, fitness 52, schools 68, walkability 30. You drive for everything — nearest hospital Lutheran Medical 25 min, Safeway in Evergreen 8 min.
+Hilltop/Crestmoor: view 82, commute 95. Urban: dining 92, grocery 88, medical 85, culture 90, fitness 90, schools 95, walkability 72. Best urban balance — Cherry Creek North 5 min, St. Joseph Hospital 10 min, Whole Foods 7 min.
+Cherry Hills/GV: view 80, commute 82. Urban: dining 78, grocery 82, medical 88, culture 65, fitness 85, schools 98, walkability 48. Swedish Medical Center 12 min. Top Cherry Creek schools. Drive for most things.
+Highlands/Sloan's Lake: view 68, commute 98. Urban: dining 95, grocery 90, medical 72, culture 88, fitness 92, schools 72, walkability 98. Best walkability — Edgewater Public Market walkable. Denver Health 12 min.
+Lookout Mountain/Golden: view 99, commute 55. Urban: dining 62, grocery 60, medical 50, culture 55, fitness 60, schools 65, walkability 45. Golden Washington Ave 7 min. St. Anthony Hospital 22 min. Best views, least urban.
+Castle Pines/Backcountry: view 78, commute 48. Urban: dining 70, grocery 78, medical 72, culture 45, fitness 75, schools 82, walkability 35. Suburban car-dependent. Good for families.
+
+USER'S CURRENT PRIORITY WEIGHTS: ${wSummary}
+
+Be concise (3-4 sentences), specific with actual distances, and name real places. Mention tradeoffs honestly.`;
+
+  try {
+    const resp = await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:800,system:sys,messages:[{role:"user",content:text}]})});
+    const data = await resp.json();
+    removeTyping();
+    addAgentMessage(data.content?.[0]?.text || "Try asking about a specific zone or what matters most — views, hospitals, walkability, or schools.");
+  } catch(e) {
+    removeTyping();
+    addAgentMessage("Connection issue. Quick guide: best walkability = Highlands/Sloan's Lake. Best schools = Cherry Hills. Best hospital access = Hilltop (St. Joseph 10 min). Best views with some urban = Hilltop. Best pure views = Lookout Mountain.");
+  }
+  btn.disabled=false; input.focus();
+}
+
+// ── Future Layer Data ─────────────────────────────────────
+const FUTURE_ZONES = {
+  foothills: {
+    mobility: { score: 88, delta: '+28%', label: 'AV unlocks commute; I-70 robo-lane by 2031' },
+    evtol:    { score: 82, delta: '+18%', label: 'RMMA vertiport 15 min away; Golden node adjacent' },
+    demo:     { score: 90, delta: '+22%', label: 'Peak target for remote Millennials + wealth migration' },
+    verdict: 'win', verdictText: '🏆 Biggest long-term upside. Currently undervalued relative to 2035 fundamentals.'
+  },
+  hilltop: {
+    mobility: { score: 72, delta: '+12%', label: 'Already urban — AV adds convenience, not transformation' },
+    evtol:    { score: 88, delta: '+20%', label: 'Cherry Creek rooftop vertiport candidate; flat terrain ideal' },
+    demo:     { score: 95, delta: '+18%', label: 'Millennial #1 pick: views + walkability + prestige' },
+    verdict: 'win', verdictText: '✅ Strong on all three fronts. Floor is high; upside moderate but reliable.'
+  },
+  cherryhills: {
+    mobility: { score: 75, delta: '+14%', label: 'AV neutralizes estate road layouts; robo-delivery suits large lots' },
+    evtol:    { score: 80, delta: '+16%', label: 'Flat terrain + large parcels = private vertipad potential' },
+    demo:     { score: 85, delta: '+20%', label: 'Boomer estate release meets Gen Z nature + water premium' },
+    verdict: 'win', verdictText: '✅ Mountain + lake combo becomes rarer and more valuable as demand rises.'
+  },
+  highlands: {
+    mobility: { score: 55, delta: '+6%', label: 'Already walkable — AV impact minimal; urban floor is strong' },
+    evtol:    { score: 58, delta: '+5%', label: 'Dense urban limits vertiport siting; noise concerns likely' },
+    demo:     { score: 70, delta: '+10%', label: 'Gen Z loves it now; limited view quality caps future premium' },
+    verdict: 'neutral', verdictText: '⚖️ Solid urban investment but least changed by mobility shift. Limited view upside.'
+  },
+  lookout: {
+    mobility: { score: 95, delta: '+40%', label: 'Winding roads → AV problem turns to solved; commute penalty erased' },
+    evtol:    { score: 90, delta: '+25%', label: 'Open ridgeline = ideal eVTOL launch pad; Golden node 7 min' },
+    demo:     { score: 82, delta: '+20%', label: '360° views + city lights = #1 aspirational product for next gen' },
+    verdict: 'win', verdictText: '🏆 The sleeper. Today\'s discount is entirely about commute pain — which disappears by 2032.'
+  },
+  castlepines: {
+    mobility: { score: 62, delta: '+12%', label: 'AV helps I-25 commute; but suburban DNA limits transformation' },
+    evtol:    { score: 50, delta: '+6%', label: 'Far from likely vertiport nodes; limited near-term eVTOL benefit' },
+    demo:     { score: 55, delta: '+8%', label: 'Family appeal solid but Gen Z suburban resistance is real' },
+    verdict: 'neutral', verdictText: '⚖️ Steady appreciation but won\'t be transformed by mobility shift like foothills zones.'
+  }
+};
+
+const HIDDEN_GEMS = [
+  {
+    tag: '🏆 Best hidden gem',
+    name: 'Lookout Mountain ridgeline lots — Golden',
+    zone: 'Lookout Mountain / Golden Zone',
+    why: 'The entire discount is the commute. Remove the commute via AV or eVTOL and you have the highest raw view score in the metro at a fraction of Hilltop pricing. A $1.35M property today becomes a $2.2M–$2.8M property when Golden gets a vertiport node (~2033). The views never change. The constraint does.',
+    uplift: '+65–80%', timeline: '2030–2035'
+  },
+  {
+    tag: '🚁 eVTOL play',
+    name: 'South-facing Genesee ridgeline — above Riva Chase',
+    zone: 'Foothills Corridor',
+    why: 'Rocky Mountain Metro Airport has a 30-year master plan explicitly including eVTOL platforms. Properties within a 10-min drive of RMMA — including upper Genesee — are today priced as "too far." That calculus inverts when an air taxi to downtown takes 8 minutes. Supply on these ridgelines is permanently constrained by Genesee Foundation open space.',
+    uplift: '+50–70%', timeline: '2031–2036'
+  },
+  {
+    tag: '👥 Demographic wave',
+    name: 'Buell Mansion corridor estate lots — Cherry Hills',
+    zone: 'Cherry Hills Village',
+    why: 'The MBA projects 9M Boomer-owned homes to hit the market by 2035. Cherry Hills has the highest concentration of Boomer-held large-lot estates in Denver. First-mover buyers at today\'s prices acquire acreage that will be intensely competed for by Millennial and Gen Z wealth — the only generation that will be able to afford it and the exact combination of mountain view + water + privacy they covet most.',
+    uplift: '+35–50%', timeline: '2028–2034'
+  },
+  {
+    tag: '☀️ South-facing premium',
+    name: 'Any hillside lot — south-facing aspect, view corridor clear',
+    zone: 'All foothills zones',
+    why: 'Gen Z and Millennials are the first generations to rate solar passive design, natural warmth, and outdoor deck livability as non-negotiable. South-facing hillside properties in Denver receive ~20% more winter solar gain. As climate consciousness peaks in 2030, south-facing lots will command an explicit premium that is not yet priced in at all. This is free alpha hiding in orientation.',
+    uplift: '+10–20% vs north-facing', timeline: '2028–2032'
+  },
+  {
+    tag: '🛜 Infrastructure asymmetry',
+    name: 'Fiber-served mountain properties — Evergreen / Conifer corridor',
+    zone: 'Foothills extended (30–45 min)',
+    why: 'CenturyLink / Lumen fiber now reaches parts of Evergreen and Conifer. Remote-work Millennials have a binary filter: fiber or no. Properties with confirmed gigabit fiber that are otherwise "too far" command zero premium today but will command 8–15% once AV commuting makes the location viable for hybrid workers. Verification required — not all addresses are served.',
+    uplift: '+15–25%', timeline: '2027–2031'
+  }
+];
+
+function buildFutureZoneGrid(containerId, metric) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  container.innerHTML = '';
+  Object.entries(FUTURE_ZONES).forEach(([key, fz]) => {
+    const z = ZONES[key]; if (!z) return;
+    const m = fz[metric];
+    const card = document.createElement('div');
+    card.className = 'zf-card';
+    const barColor = m.score >= 85 ? '#5dca90' : m.score >= 70 ? '#63b4ff' : m.score >= 55 ? '#f0b34a' : '#e07070';
+    card.innerHTML = `
+      <div class="zf-name" style="color:${z.color}">${z.name}</div>
+      <div class="zf-bars">
+        <div class="zf-row">
+          <span class="zf-label">Future score</span>
+          <div class="zf-bar-bg"><div class="zf-bar-fill" style="width:${m.score}%;background:${barColor}"></div></div>
+          <span class="zf-num" style="color:${barColor}">${m.score}</span>
+        </div>
+        <div class="zf-row">
+          <span class="zf-label">Est. value delta</span>
+          <div class="zf-bar-bg" style="background:rgba(93,202,144,0.15)"><div class="zf-bar-fill" style="width:${Math.min(parseInt(m.delta),80)}%;background:#5dca90"></div></div>
+          <span class="zf-num" style="color:#5dca90;font-size:10px">${m.delta}</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:#7a9ab8;margin-top:7px;line-height:1.4">${m.label}</div>
+      <div class="zf-verdict ${fz.verdict === 'win' ? 'verdict-win' : fz.verdict === 'risk' ? 'verdict-risk' : 'verdict-neutral'}">${fz.verdictText}</div>`;
+    container.appendChild(card);
+  });
+}
+
+function buildGems() {
+  const container = document.getElementById('gems-list');
+  if (!container) return;
+  container.innerHTML = '';
+  HIDDEN_GEMS.forEach(g => {
+    const card = document.createElement('div');
+    card.className = 'gem-card';
+    card.innerHTML = `
+      <div>
+        <span class="gem-tag">${g.tag}</span>
+        <div class="gem-name">${g.name}</div>
+        <div class="gem-zone">${g.zone} · Est. 2035 realisation: ${g.timeline}</div>
+        <div class="gem-why">${g.why}</div>
+      </div>
+      <div class="gem-uplift">
+        <div class="gem-uplift-val">${g.uplift}</div>
+        <div class="gem-uplift-label">est. uplift</div>
+      </div>`;
+    container.appendChild(card);
+  });
+}
+
+function showFTab(tab) {
+  document.querySelectorAll('.future-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ftab').forEach(el => el.classList.remove('active'));
+  document.getElementById('ftab-'+tab).classList.add('active');
+  document.querySelectorAll('.ftab').forEach((el, i) => {
+    if (['mobility','evtol','demography','gems','scenarios'][i] === tab) el.classList.add('active');
+  });
+  if (tab === 'mobility') buildFutureZoneGrid('mobility-zone-grid', 'mobility');
+  if (tab === 'evtol') buildFutureZoneGrid('evtol-zone-grid', 'evtol');
+  if (tab === 'demography') buildFutureZoneGrid('demo-zone-grid', 'demo');
+  if (tab === 'gems') buildGems();
+}
+
+function showScenario(s) {
+  document.querySelectorAll('.scen-content').forEach(el => el.classList.remove('show'));
+  document.querySelectorAll('.scen-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('scen-'+s).classList.add('show');
+  document.querySelectorAll('.scen-btn').forEach((el, i) => {
+    if (['base','bull','bear'][i] === s) el.classList.add('active');
+  });
+}
+
+// ── View tab switching ────────────────────────────────────
+const VIEW_PANELS = ['zones','list','map','future','chat'];
+let currentView = 'zones';
+
+function switchView(v) {
+  currentView = v;
+  VIEW_PANELS.forEach(p => {
+    document.getElementById('vpanel-'+p).classList.toggle('active', p===v);
+    const tab = document.getElementById('vtab-'+p);
+    if (tab) tab.classList.toggle('active', p===v);
+  });
+  if (v === 'map') {
+    setTimeout(() => { if (leafletMap) leafletMap.invalidateSize(); }, 100);
+  }
+}
+
+// ── Location presets ──────────────────────────────────────
+const CITY_PRESETS = {
+  denver: {
+    name: 'Denver', lat: 39.7392, lng: -104.9903, zoom: 10,
+    title: 'Denver View Properties'
+  },
+  boulder: {
+    name: 'Boulder', lat: 40.0150, lng: -105.2705, zoom: 11,
+    title: 'Boulder View Properties'
+  },
+  colorado_springs: {
+    name: 'Colorado Springs', lat: 38.8339, lng: -104.8214, zoom: 11,
+    title: 'Colorado Springs View Properties'
+  }
+};
+
+let currentCity = 'denver';
+
+function loadPreset(key) {
+  if (key === 'custom') {
+    document.getElementById('city-search-input').focus();
+    return;
+  }
+  const p = CITY_PRESETS[key];
+  if (!p) return;
+  currentCity = key;
+  document.getElementById('app-city-name').textContent = p.name;
+  document.getElementById('main-page-title').textContent = p.title;
+  if (leafletMap) {
+    leafletMap.setView([p.lat, p.lng], p.zoom);
+  }
+}
+
+async function searchCity() {
+  const q = document.getElementById('city-search-input').value.trim();
+  if (!q) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+    const data = await r.json();
+    if (data && data[0]) {
+      const {lat, lon, display_name} = data[0];
+      const cityName = display_name.split(',')[0];
+      document.getElementById('app-city-name').textContent = cityName;
+      document.getElementById('main-page-title').textContent = cityName + ' View Properties';
+      flyTo(parseFloat(lat), parseFloat(lon), 11, cityName);
+      switchView('map');
+    }
+  } catch(e) { console.warn('Geocode failed', e); }
+}
+
+// ── Leaflet map ───────────────────────────────────────────
+let leafletMap = null;
+let listingMarkers = [];
+let zonePolygons = [];
+
+// Approximate zone bounding boxes for Denver [sw_lat, sw_lng, ne_lat, ne_lng]
+const ZONE_BOUNDS = {
+  foothills:   { bounds: [[39.64,-105.42],[39.82,-105.17]], color:'#2a6496' },
+  hilltop:     { bounds: [[39.698,-104.975],[39.736,-104.927]], color:'#5a8e3a' },
+  cherryhills: { bounds: [[39.608,-104.975],[39.658,-104.905]], color:'#8a4a1a' },
+  highlands:   { bounds: [[39.726,-105.072],[39.762,-105.023]], color:'#6a3a8a' },
+  lookout:     { bounds: [[39.70,-105.28],[39.77,-105.19]], color:'#c04a20' },
+  castlepines: { bounds: [[39.42,-104.95],[39.50,-104.83]], color:'#1a6a5a' }
+};
+
+function initMap() {
+  if (leafletMap) return;
+  leafletMap = L.map('map-container').setView([39.74,-105.0], 10);
+
+  // OpenStreetMap tiles — free, no key
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors',
+    maxZoom: 19
+  }).addTo(leafletMap);
+
+  // Draw zone outlines
+  Object.entries(ZONE_BOUNDS).forEach(([key, z]) => {
+    const zone = ZONES[key];
+    const rect = L.rectangle(z.bounds, {
+      color: z.color, weight: 2, fillColor: z.color,
+      fillOpacity: 0.08, dashArray: '5,5'
+    }).addTo(leafletMap);
+    rect.bindTooltip(`<strong>${zone?.name || key}</strong><br>View score: ${ZONE_VIEW[key] || '–'}/100`, {
+      direction: 'top', className: 'leaflet-tooltip'
+    });
+    rect.on('click', () => selectZone(key));
+    zonePolygons.push(rect);
+  });
+}
+
+function flyTo(lat, lng, zoom, label) {
+  if (!leafletMap) initMap();
+  leafletMap.flyTo([lat, lng], zoom, { duration: 1.2 });
+  if (label) document.getElementById('map-status').textContent = `Viewing: ${label}`;
+}
+
+function flyToCurrentZones() {
+  if (!leafletMap) initMap();
+  leafletMap.flyTo([39.74, -105.0], 10, { duration: 1.2 });
+  document.getElementById('map-status').textContent = 'Denver metro view zones. Run the briefing to plot live listings.';
+}
+
+async function geocodeAndFly() {
+  const q = document.getElementById('map-search-input').value.trim();
+  if (!q) return;
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+    const data = await r.json();
+    if (data && data[0]) {
+      flyTo(parseFloat(data[0].lat), parseFloat(data[0].lon), 12, data[0].display_name.split(',')[0]);
+    } else {
+      document.getElementById('map-status').textContent = `No results found for "${q}"`;
+    }
+  } catch(e) {
+    document.getElementById('map-status').textContent = 'Search failed — check connection and try again.';
+  }
+}
+
+function scoreToColor(s) {
+  if (s >= 85) return '#1a7a4a';
+  if (s >= 70) return '#2a6496';
+  if (s >= 55) return '#8a5a00';
+  return '#a83232';
+}
+
+function plotListingsOnMap() {
+  if (!leafletMap) initMap();
+
+  // Clear existing markers
+  listingMarkers.forEach(m => leafletMap.removeLayer(m));
+  listingMarkers = [];
+
+  const weights = getWeights();
+  let plotted = 0;
+
+  LISTINGS.forEach(l => {
+    // Use zone centre coords as fallback (Redfin data may not have lat/lng)
+    const zb = ZONE_BOUNDS[l.zone];
+    if (!zb) return;
+
+    // Use actual lat/lng from Redfin if available, otherwise jitter zone centre
+    const lat = l.lat || ((zb.bounds[0][0] + zb.bounds[1][0]) / 2 + (Math.random()-0.5)*0.02);
+    const lng = l.lng || ((zb.bounds[0][1] + zb.bounds[1][1]) / 2 + (Math.random()-0.5)*0.02);
+
+    const urbanScore = calcUrbanScore(l.urban, weights);
+    const composite = calcComposite(l.viewScore, urbanScore, ZONES[l.zone]?.dims.commute || 70);
+    const color = scoreToColor(composite);
+
+    const icon = L.divIcon({
+      className: '',
+      html: `<div style="background:${color};color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);cursor:pointer">${composite}</div>`,
+      iconSize: [32, 32], iconAnchor: [16, 16]
+    });
+
+    const marker = L.marker([lat, lng], {icon}).addTo(leafletMap);
+    const price = l.price > 0 ? '$' + (l.price/1000000).toFixed(2) + 'M' : 'Price N/A';
+    const zestDelta = l.zestimate > 0 ? `<br><span style="color:${l.price < l.zestimate ? '#1a7a4a' : '#a83232'}">${l.price < l.zestimate ? '▼ Below' : '▲ Above'} Zestimate</span>` : '';
+    const link = l.listingUrl ? `<br><a href="${l.listingUrl}" target="_blank" style="color:#2a6496;font-size:11px;">View on Redfin →</a>` : '';
+
+    marker.bindPopup(`
+      <div style="font-size:13px;min-width:200px;">
+        <div style="font-weight:600;margin-bottom:4px">${l.address}</div>
+        <div style="font-size:12px;color:#666;margin-bottom:6px">${ZONES[l.zone]?.name || l.zone}</div>
+        <div style="font-size:15px;font-weight:700;margin-bottom:4px">${price}</div>
+        <div style="font-size:11.5px;color:#444">
+          ${l.beds}bd · ${l.baths}ba · ${l.sqft > 0 ? l.sqft.toLocaleString()+' sqft' : '–'}
+          · ${l.dom === 0 ? 'New' : l.dom+' days'}
+          ${zestDelta}
+        </div>
+        <div style="margin-top:8px;padding:6px;background:#f4f3ef;border-radius:6px;font-size:11px;">
+          Composite <strong>${composite}</strong> · View <strong>${l.viewScore}</strong> · Urban <strong>${urbanScore}</strong>
+        </div>
+        ${link}
+      </div>
+    `);
+    listingMarkers.push(marker);
+    plotted++;
+  });
+
+  document.getElementById('map-status').textContent =
+    plotted > 0
+      ? `${plotted} listings plotted. Circle = composite score. Click any pin for details.`
+      : 'No listings to plot. Run the Daily Briefing first.';
+}
+
+// ── Persistence ───────────────────────────────────────────
+const PREF_KEY = 'denverViews_prefs_v4';
+
+const PERSISTED_RANGES = [
+  {id:'w-dining',  display:'wv-dining'},
+  {id:'w-grocery', display:'wv-grocery'},
+  {id:'w-medical', display:'wv-medical'},
+  {id:'w-culture', display:'wv-culture'},
+  {id:'w-fitness', display:'wv-fitness'},
+  {id:'w-schools', display:'wv-schools'},
+  {id:'w-walk',    display:'wv-walk'},
+  {id:'f-commute', display:'commute-val', fmt: v => v+'m'},
+  {id:'f-budget',  display:'budget-val',  fmt: v => '$'+v+'M'},
+];
+const PERSISTED_SELECTS = [];
+const PERSISTED_CHECKS  = ['opt-future','opt-view','opt-new-only','opt-sfonly'];
+
+function savePrefs() {
+  const prefs = { zone: currentZone, ranges:{}, selects:{}, checks:{} };
+  PERSISTED_RANGES.forEach(r => {
+    const el = document.getElementById(r.id);
+    if (el) prefs.ranges[r.id] = el.value;
+  });
+  PERSISTED_CHECKS.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) prefs.checks[id] = el.checked;
+  });
+  try { localStorage.setItem(PREF_KEY, JSON.stringify(prefs)); } catch(e) {}
+  showSavedToast();
+}
+
+function loadPrefs() {
+  let prefs;
+  try { prefs = JSON.parse(localStorage.getItem(PREF_KEY)); } catch(e) {}
+  if (!prefs) return;
+
+  PERSISTED_RANGES.forEach(r => {
+    if (prefs.ranges?.[r.id] === undefined) return;
+    const el = document.getElementById(r.id);
+    if (!el) return;
+    el.value = prefs.ranges[r.id];
+    const displayEl = document.getElementById(r.display);
+    if (displayEl) displayEl.textContent = (r.fmt || (v=>v))(el.value);
+  });
+  PERSISTED_CHECKS.forEach(id => {
+    if (prefs.checks?.[id] === undefined) return;
+    const el = document.getElementById(id);
+    if (el) el.checked = prefs.checks[id];
+  });
+  if (prefs.zone) { currentZone = prefs.zone; }
+
+  urbanKeys.forEach(k => {
+    const el = document.getElementById('w-'+k);
+    const dEl = document.getElementById('wv-'+k);
+    if (el && dEl) dEl.textContent = el.value;
+  });
+}
+
+function showSavedToast() {
+  let toast = document.getElementById('save-toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'save-toast';
+    toast.style.cssText = 'position:fixed;bottom:24px;right:24px;background:var(--green);color:#fff;font-size:12.5px;font-weight:500;padding:8px 16px;border-radius:8px;opacity:0;transition:opacity 0.25s;pointer-events:none;z-index:999';
+    document.body.appendChild(toast);
+  }
+  toast.textContent = '✓ Preferences saved';
+  toast.style.opacity = '1';
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => { toast.style.opacity = '0'; }, 1800);
+}
+
+// Hook save onto every interactive control
+[...PERSISTED_RANGES.map(r=>r.id), ...PERSISTED_CHECKS].forEach(id => {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const evt = el.type === 'checkbox' ? 'change' : 'input';
+  el.addEventListener(evt, savePrefs);
+});
+
+// Load on startup, then build
+document.addEventListener('DOMContentLoaded', () => {
+  loadPrefs();
+  buildZoneCards();
+  buildFutureZoneGrid('mobility-zone-grid', 'mobility');
+  document.getElementById('date-line').textContent = new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}) + ' · Composite scoring + future intelligence';
+  // Fetch latest future data from GitHub (non-blocking — fallback built in)
+  loadFutureData();
+});
+
+// Load Leaflet JS lazily
+(function(){
+  const s = document.createElement('script');
+  s.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>

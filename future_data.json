@@ -1,0 +1,49 @@
+{
+  "updated": "2026-04-05",
+  "update_summary": "Waymo confirmed Denver launch 2026 — already testing on streets with human safety drivers since September 2025, targeting public rides by late 2026. Colorado's 2017 law is uniquely permissive with no regulatory oversight body, accelerating deployment vs. other states. DEN airport service being actively negotiated. eVTOL sector consolidating but RMMA remains a viable Colorado vertiport candidate.",
+  "sources": [
+    "Axios Denver — Waymo robotaxis set for Denver launch 2026 (Dec 2025)",
+    "Colorado Sun — Self-driving car company Waymo heading to metro Denver (Sep 2025)",
+    "Waymo Blog — 6th-generation Driver deployment update (Feb 2026)",
+    "Colorado Sun — Waymo Denver airport service in discussion (Sep 2025)",
+    "GovTech — As Waymo Rolls in Denver, Colorado Lacks Oversight Agency (Nov 2025)"
+  ],
+  "zones": {
+    "foothills": {
+      "score": 91,
+      "av": 93,
+      "evtol": 82,
+      "driver": "Waymo Denver launch 2026 directly collapses the I-70 commute penalty that has suppressed Genesee/Evergreen pricing — biggest single AV beneficiary in the Denver metro"
+    },
+    "hilltop": {
+      "score": 78,
+      "av": 68,
+      "evtol": 62,
+      "driver": "Urban access already priced in; AV provides incremental convenience not a step-change — resilient floor but limited future upside multiplier"
+    },
+    "cherryhills": {
+      "score": 77,
+      "av": 72,
+      "evtol": 66,
+      "driver": "Boomer estate release 2028-2035 creates rare inventory window; prestige floor holds regardless of AV timeline; institutional buyer demand provides downside protection"
+    },
+    "highlands": {
+      "score": 83,
+      "av": 74,
+      "evtol": 68,
+      "driver": "Walkable + transit-ready structure means value thesis works in every mobility scenario — most resilient zone if AV adoption is slower than forecast"
+    },
+    "lookout": {
+      "score": 94,
+      "av": 97,
+      "evtol": 86,
+      "driver": "Winding mountain roads previously incompatible with AVs are Waymo's explicit 2026 Denver target area — commute penalty disappears entirely; biggest transformation of any zone"
+    },
+    "castlepines": {
+      "score": 73,
+      "av": 76,
+      "evtol": 58,
+      "driver": "Car-dependent structure is neutralised by AV adoption by 2030-2033 but depends entirely on Waymo expanding south of the I-25/C-470 corridor on schedule"
+    }
+  }
+}

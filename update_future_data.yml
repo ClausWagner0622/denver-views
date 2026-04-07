@@ -1,0 +1,129 @@
+name: Update Future Intelligence Data
+
+on:
+  schedule:
+    # Runs every Monday at 07:00 UTC (midnight Mountain Time)
+    - cron: '0 7 * * 1'
+  workflow_dispatch:  # Also allows manual trigger from GitHub UI
+
+jobs:
+  update-future-data:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Call Claude to research and update future data
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          cat > prompt.txt << 'PROMPT'
+          You are updating a JSON file that powers a Denver-area real estate future-proof scoring tool.
+          The tool scores 6 zones on how well they'll perform in 2030-2040 given:
+          - Autonomous vehicle (AV/robocar) adoption and Denver-specific deployments
+          - eVTOL / flying car / vertiport developments near Denver
+          - Demographic shifts (Millennial peak buying, Gen Z, Boomer estate releases)
+          - Any other major infrastructure or mobility developments affecting these zones
+
+          The 6 zones are:
+          - foothills: Genesee, Evergreen, Golden area — mountain/foothills I-70 corridor
+          - hilltop: Hilltop/Crestmoor — high-end inner Denver neighborhood
+          - cherryhills: Cherry Hills Village, Greenwood Village — south Denver prestige suburbs
+          - highlands: Highlands, Sloan's Lake — walkable urban NW Denver
+          - lookout: Lookout Mountain, Golden — elevated mountain zone above Golden
+          - castlepines: Castle Pines, Backcountry — gated south suburban
+
+          Research the latest news and developments on:
+          1. Waymo and other AV companies in Denver (current status, timeline, coverage area)
+          2. eVTOL / air taxi developments in Colorado (Joby, Archer, Lilium, Overair etc.)
+          3. Rocky Mountain Metropolitan Airport (RMMA) developments
+          4. Denver demographic and housing market trends
+          5. Any major infrastructure (I-70 tunnels, RTD expansions, highway changes) affecting these zones
+
+          Based on your research, output ONLY a valid JSON object in exactly this format (no markdown, no explanation, just the JSON):
+
+          {
+            "updated": "YYYY-MM-DD",
+            "update_summary": "2-3 sentence summary of what changed and why",
+            "sources": ["source1", "source2"],
+            "zones": {
+              "foothills":   { "score": 0-100, "av": 0-100, "evtol": 0-100, "driver": "one sentence key thesis" },
+              "hilltop":     { "score": 0-100, "av": 0-100, "evtol": 0-100, "driver": "one sentence key thesis" },
+              "cherryhills": { "score": 0-100, "av": 0-100, "evtol": 0-100, "driver": "one sentence key thesis" },
+              "highlands":   { "score": 0-100, "av": 0-100, "evtol": 0-100, "driver": "one sentence key thesis" },
+              "lookout":     { "score": 0-100, "av": 0-100, "evtol": 0-100, "driver": "one sentence key thesis" },
+              "castlepines": { "score": 0-100, "av": 0-100, "evtol": 0-100, "driver": "one sentence key thesis" }
+            }
+          }
+
+          Score reasoning:
+          - AV score: how much does robocar/AV adoption specifically benefit this zone (0=no benefit, 100=transforms it)
+          - eVTOL score: proximity to likely vertiport locations and demand fit (0=irrelevant, 100=major beneficiary)
+          - Overall score: composite 2030-2040 future demand outlook (70=stable, 85+=strong tailwind, 90+=transformational)
+
+          Today's date: $(date +%Y-%m-%d)
+          PROMPT
+
+          # Call Claude API with web search tool enabled
+          RESPONSE=$(curl -s https://api.anthropic.com/v1/messages \
+            -H "x-api-key: $ANTHROPIC_API_KEY" \
+            -H "anthropic-version: 2023-06-01" \
+            -H "content-type: application/json" \
+            -d "{
+              \"model\": \"claude-sonnet-4-20250514\",
+              \"max_tokens\": 2000,
+              \"tools\": [{\"type\": \"web_search_20250305\", \"name\": \"web_search\"}],
+              \"messages\": [{
+                \"role\": \"user\",
+                \"content\": $(cat prompt.txt | python3 -c \"import sys,json; print(json.dumps(sys.stdin.read()))\")
+              }]
+            }")
+
+          # Extract the text content from the response
+          echo "$RESPONSE" | python3 - << 'PYEOF'
+          import json, sys, re
+
+          data = json.load(sys.stdin)
+          
+          # Find the last text block in the response
+          text = ""
+          for block in data.get("content", []):
+              if block.get("type") == "text":
+                  text = block["text"]
+          
+          # Extract JSON from the response (handle any surrounding text)
+          # Find the outermost { ... }
+          match = re.search(r'\{[\s\S]*\}', text)
+          if not match:
+              print("ERROR: No JSON found in response", file=sys.stderr)
+              print(text[:500], file=sys.stderr)
+              sys.exit(1)
+          
+          json_str = match.group(0)
+          
+          # Validate it parses correctly
+          parsed = json.loads(json_str)
+          
+          # Verify required fields
+          required_zones = ["foothills","hilltop","cherryhills","highlands","lookout","castlepines"]
+          for zone in required_zones:
+              if zone not in parsed.get("zones", {}):
+                  print(f"ERROR: Missing zone {zone}", file=sys.stderr)
+                  sys.exit(1)
+          
+          # Write pretty-printed JSON
+          with open("future_data.json", "w") as f:
+              json.dump(parsed, f, indent=2)
+          
+          print(f"✓ Updated future_data.json — {parsed.get('update_summary', '')}")
+          PYEOF
+
+      - name: Commit updated future data
+        run: |
+          git config user.name "Future Intelligence Bot"
+          git config user.email "bot@github-actions"
+          git add future_data.json
+          # Only commit if there are changes
+          git diff --staged --quiet || git commit -m "🤖 Auto-update future intelligence data $(date +%Y-%m-%d)"
+          git push
